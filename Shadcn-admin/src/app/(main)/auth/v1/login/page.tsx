@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { z } from "zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { MailCheck, Eye, EyeOff } from "lucide-react";
-import Cookies from "js-cookie"; // ← NEW!
+import Cookies from "js-cookie";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -17,19 +17,23 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import apiClient from "@/lib/api-client";
 import { Input } from "@/components/ui/input";
 
-// Login schema
+// -----------------------
+// Validation Schemas
+// -----------------------
 const LoginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
   remember: z.boolean().optional(),
 });
 
-// Reset schema
 const ResetSchema = z.object({
   email: z.string().email({ message: "Please enter a registered email address." }),
 });
 
-export default function LoginV1() {
+// -----------------------
+// Login Component
+// -----------------------
+function LoginV1() {
   const [showResetForm, setShowResetForm] = useState(false);
   const [showResetSent, setShowResetSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -63,11 +67,9 @@ export default function LoginV1() {
 
       const result = res.data;
 
-      // Store login details and profile info in localStorage
       localStorage.setItem("access_token", result.token);
-      Cookies.set("access_token", result.token, { expires: 7 }); // <--- THE IMPORTANT LINE!
+      Cookies.set("access_token", result.token, { expires: 7 });
       localStorage.setItem("admin_id", result.admin.id);
-
       localStorage.setItem("admin_name", `${result.admin.first_name || ""} ${result.admin.last_name || ""}`.trim());
       localStorage.setItem("admin_email", result.admin.email || "");
       localStorage.setItem("admin_photo", result.admin.photo || "/avatars/neutral.jpg");
@@ -82,7 +84,6 @@ export default function LoginV1() {
   const onResetSubmit = async (data: z.infer<typeof ResetSchema>) => {
     try {
       await apiClient.post("/api/admins/password/reset/", { email: data.email });
-
       toast.success("Reset link sent");
       setShowResetForm(false);
       setShowResetSent(true);
@@ -93,7 +94,7 @@ export default function LoginV1() {
 
   return (
     <div className="flex h-dvh">
-      {/* Left Side */}
+      {/* Left side */}
       <div className="bg-primary hidden lg:block lg:w-1/3">
         <div className="flex h-full flex-col items-center justify-center p-12 text-center">
           <div className="space-y-6">
@@ -110,7 +111,7 @@ export default function LoginV1() {
         </div>
       </div>
 
-      {/* Right Side */}
+      {/* Right side */}
       <div className="bg-background flex w-full items-center justify-center p-8 lg:w-2/3">
         <div className="w-full max-w-md space-y-10 py-24 lg:py-32">
           <div className="space-y-4 text-center">
@@ -258,5 +259,16 @@ export default function LoginV1() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+// -----------------------
+// Suspense Wrapper Export
+// -----------------------
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginV1 />
+    </Suspense>
   );
 }
