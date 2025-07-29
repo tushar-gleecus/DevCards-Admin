@@ -37,35 +37,37 @@ export function CategoryForm({
             setForm({ name: "", description: "", deckId: decks.length > 0 ? decks[0].id : "" });
           }}
         >
-          <Label htmlFor="category-name">Category Name</Label>
-          <Input
+            <Label htmlFor="category-name">Name</Label>
+            <Input
             id="category-name"
             placeholder="Enter category name"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             required
-          />
-          <Label htmlFor="category-description">Category Description</Label>
-          <Input
-            id="category-description"
-            placeholder="Enter category description"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            required
-          />
-          <Label htmlFor="deck-dropdown">Deck Name</Label>
-          <Select value={form.deckId} onValueChange={(value) => setForm({ ...form, deckId: value })} required>
-            <SelectTrigger id="deck-dropdown">
+            className="border border-zinc-300"
+            />
+            <Label htmlFor="category-description">Description</Label>
+            <textarea
+              id="category-description"
+              placeholder="Enter category description"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              required
+              className="border border-zinc-300 rounded-md p-2 min-h-[80px] resize-y"
+            />
+            <Label htmlFor="deck-dropdown">Deck Name</Label>
+            <Select value={form.deckId} onValueChange={(value) => setForm({ ...form, deckId: value })} required>
+            <SelectTrigger id="deck-dropdown" className="border border-zinc-300">
               <SelectValue placeholder="Select Deck" />
             </SelectTrigger>
             <SelectContent>
               {decks.map((deck) => (
-                <SelectItem key={deck.id} value={deck.id}>
-                  {deck.name}
-                </SelectItem>
+              <SelectItem key={deck.id} value={deck.id}>
+                {deck.name}
+              </SelectItem>
               ))}
             </SelectContent>
-          </Select>
+            </Select>
           <Button type="submit" className="mt-2 w-full">
             Create Category
           </Button>

@@ -8,7 +8,7 @@ export interface Deck {
   status: boolean;
   created_at: string;
   updated_at: string;
-  created_by?: any;
+  created_by?: string;
   updated_by?: any;
 }
 

@@ -98,6 +98,7 @@ export default function AdminForm({ onAddAdmin }: { onAddAdmin: (admin: AdminWit
     <form onSubmit={handleSubmit}>
       <div className="mt-4" />
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+
         {/* First Name */}
         <div className="space-y-2">
           <Label>
@@ -151,7 +152,7 @@ export default function AdminForm({ onAddAdmin }: { onAddAdmin: (admin: AdminWit
           {touched.email && errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
         </div>
         {/* Role */}
-        <div className="col-span-full space-y-2">
+        <div className="space-y-2">
           <Label>
             Role <span className="text-red-500">*</span>
           </Label>
@@ -177,7 +178,7 @@ export default function AdminForm({ onAddAdmin }: { onAddAdmin: (admin: AdminWit
           {touched.role && errors.role && <p className="text-xs text-red-600">{errors.role}</p>}
         </div>
         {/* Submit */}
-        <div className="col-span-full">
+        <div className="md:col-span-2">
           <Button
             disabled={loading || Object.keys(validate(form)).length > 0}
             className="flex items-center"

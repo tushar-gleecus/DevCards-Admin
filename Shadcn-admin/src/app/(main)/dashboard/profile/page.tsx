@@ -61,14 +61,20 @@ const COUNTRY_LIST = [
   "Sweden",
 ];
 
+
+
+
 export default function AdminProfilePage() {
   const [editOpen, setEditOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   // For country typeahead in modal
   const [countryQuery, setCountryQuery] = useState("");
@@ -135,43 +141,50 @@ setFormData({
   };
 
   const handleProfileUpdate = async () => {
-    const adminId = localStorage.getItem("admin_id");
-    if (!adminId) return;
+  const adminId = localStorage.getItem("admin_id");
+  if (!adminId) return;
 
-    try {
-      await apiClient.put(`/api/admins/update/${adminId}/`, formData);
-      toast.success("Profile updated successfully");
-      // Update name/email in localStorage
-      localStorage.setItem(
-        "admin_name",
-        (formData.first_name || "") + (formData.last_name ? ` ${formData.last_name}` : ""),
-      );
-      localStorage.setItem("admin_email", formData.email || "");
-      window.dispatchEvent(new Event("profile-photo-changed")); // for completeness, fire event for name/email change
-      setEditOpen(false);
-    } catch (err) {
-      toast.error("Profile update failed");
-    }
-  };
+  try {
+    setSaving(true);
+    await apiClient.put(`/api/admins/update/${adminId}/`, formData);
+    toast.success("Profile updated successfully");
 
-  const handlePasswordChange = async (e: any) => {
-    e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-    try {
-      await apiClient.post("/api/admins/password/change/", {
-        new_password1: newPassword,
-        new_password2: confirmPassword,
-      });
-      toast.success("Password changed successfully");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (err) {
-      toast.error("Password change failed");
-    }
-  };
+    localStorage.setItem(
+      "admin_name",
+      (formData.first_name || "") + (formData.last_name ? ` ${formData.last_name}` : ""),
+    );
+    localStorage.setItem("admin_email", formData.email || "");
+    window.dispatchEvent(new Event("profile-photo-changed"));
+    setEditOpen(false);
+  } catch (err) {
+    toast.error("Profile update failed");
+  } finally {
+    setSaving(false);
+  }
+};
+
+
+const handlePasswordChange = async (e: any) => {
+  e.preventDefault();
+  if (newPassword !== confirmPassword) {
+    toast.error("Passwords do not match");
+    return;
+  }
+  try {
+    setIsSubmitting(true); // show spinner
+    await apiClient.post("/api/admins/password/change/", {
+      new_password1: newPassword,
+      new_password2: confirmPassword,
+    });
+    toast.success("Password changed successfully");
+    setNewPassword("");
+    setConfirmPassword("");
+  } catch (err) {
+    toast.error("Password change failed");
+  } finally {
+    setIsSubmitting(false); // hide spinner
+  }
+};
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -372,13 +385,8 @@ setFormData({
                     <DialogTitle>Edit Admin Details</DialogTitle>
                     <DialogDescription>Update your profile info below.</DialogDescription>
                   </DialogHeader>
-                  <form
-                    className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleProfileUpdate();
-                    }}
-                  >
+                  <form className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2">
+
                     <div className="col-span-2 space-y-1">
                       <Label htmlFor="email">Email</Label>
                       <Input
@@ -469,9 +477,10 @@ setFormData({
                     </div>
                   </form>
                   <DialogFooter>
-                    <Button type="button" onClick={handleProfileUpdate}>
-                      Save Changes
-                    </Button>
+                    <Button type="button" onClick={handleProfileUpdate} disabled={saving}>
+  {saving ? "Saving..." : "Save Changes"}
+</Button>
+
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -529,9 +538,36 @@ setFormData({
                   </button>
                 </div>
               </div>
-              <Button type="submit" className="w-full">
-                Submit
-              </Button>
+              <Button type="button" onClick={handlePasswordChange} disabled={isSubmitting}>
+  {isSubmitting ? (
+    <>
+      <svg
+        className="mr-2 h-4 w-4 animate-spin text-white"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v8H4z"
+        />
+      </svg>
+      Saving...
+    </>
+  ) : (
+    "Submit"
+  )}
+</Button>
+
             </form>
           </CardContent>
         </Card>

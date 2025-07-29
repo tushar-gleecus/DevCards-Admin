@@ -11,6 +11,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { EditCategoryDialog } from "./edit-category-dialog";
 import { MoreHorizontal, Funnel, ArrowUpAZ, Eye, EyeOff } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 
 // UI prop types
 type UIDeck = { id: string; name: string };
@@ -77,6 +88,9 @@ export function CategoryTable({ categories, decks, onEditCategory, onDeleteCateg
   });
   const [filterOpen, setFilterOpen] = useState<{ [key in SortKey]?: boolean }>({});
   const [filters, setFilters] = useState<{ [key in SortKey]?: string }>({});
+  const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
 
   function applyFilters(list: UICategory[]): UICategory[] {
     return list.filter((category) => {
@@ -214,12 +228,19 @@ export function CategoryTable({ categories, decks, onEditCategory, onDeleteCateg
                     {visibleCols.deck_name && <TableCell>{cat.deck_name}</TableCell>}
                     {visibleCols.status && (
                       <TableCell>
-                        {cat.status ? (
-                          <span className="text-green-600">Active</span>
-                        ) : (
-                          <span className="text-red-600">Inactive</span>
-                        )}
-                      </TableCell>
+  <span
+    className={`inline-block rounded px-2 py-1 text-xs font-medium ${
+      String(cat.status) === "Active"
+        ? "bg-green-100 text-green-800"
+        : String(cat.status) === "Inactive"
+        ? "bg-yellow-100 text-yellow-800"
+        : "bg-gray-100 text-gray-700"
+    }`}
+  >
+    {String(cat.status)}
+  </span>
+</TableCell>
+
                     )}
                     {visibleCols.created_at && <TableCell>{new Date(cat.created_at).toLocaleDateString()}</TableCell>}
                     <TableCell>
@@ -238,9 +259,16 @@ export function CategoryTable({ categories, decks, onEditCategory, onDeleteCateg
                           >
                             Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onDeleteCategory(cat.id)} className="text-red-600">
-                            Delete
-                          </DropdownMenuItem>
+                          <DropdownMenuItem
+  onClick={() => {
+    setDeleteCategoryId(cat.id);
+    setConfirmDeleteOpen(true);
+  }}
+  className="text-red-600"
+>
+  Delete
+</DropdownMenuItem>
+
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -303,6 +331,33 @@ export function CategoryTable({ categories, decks, onEditCategory, onDeleteCateg
           if (editCategory) onEditCategory(editCategory.id, data);
         }}
       />
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+  <AlertDialogContent>
+    <AlertDialogHeader>
+      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+      <AlertDialogDescription>
+        This action cannot be undone. This will permanently delete this category.
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancel</AlertDialogCancel>
+      <AlertDialogAction
+        className="bg-destructive text-white hover:bg-destructive/90"
+        onClick={() => {
+          if (deleteCategoryId) {
+            onDeleteCategory(deleteCategoryId);
+            setConfirmDeleteOpen(false);
+            setDeleteCategoryId(null);
+          }
+        }}
+      >
+        Confirm Delete
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
+
     </div>
+    
   );
 }

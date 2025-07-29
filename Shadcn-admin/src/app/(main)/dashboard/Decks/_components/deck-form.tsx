@@ -23,7 +23,7 @@ export function DeckForm({ onAddDeck }: { onAddDeck: (data: { name: string; desc
     <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
       <div>
         <Label htmlFor="deck-name" className="mb-2 block">
-          Deck Name
+          Name
         </Label>
         <Input
           id="deck-name"
@@ -32,20 +32,22 @@ export function DeckForm({ onAddDeck }: { onAddDeck: (data: { name: string; desc
           onChange={handleChange}
           placeholder="Enter deck name"
           required
+          className="border border-zinc-400 focus:border-zinc-600"
         />
       </div>
       <div>
-        <Label htmlFor="deck-desc" className="mb-2 block">
-          Deck Description
-        </Label>
-        <Input
-          id="deck-desc"
-          name="description"
-          value={form.description}
-          onChange={handleChange}
-          placeholder="Enter deck description"
-          required
-        />
+        <Label htmlFor="description">Description</Label>
+<div className="mt-2">
+  <textarea
+    id="description"
+    name="description"
+    placeholder="Enter detailed deck description"
+    value={form.description}
+    onChange={handleChange}
+    className="min-h-[100px] w-full rounded-md border border-zinc-400 p-2 text-sm focus:border-zinc-600 focus:outline-none"
+  ></textarea>
+</div>
+
       </div>
       <Button type="submit" className="w-full">
         Create Deck
