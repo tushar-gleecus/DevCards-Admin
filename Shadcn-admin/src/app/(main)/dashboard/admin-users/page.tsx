@@ -8,6 +8,8 @@ import { adminColumns } from "./_components/columns";
 import { Admin } from "@/types/admin";
 import { EditAdminDialog } from "./_components/edit-admin-dialog";
 import { DeleteAdminDialog } from "./_components/delete-admin-dialog";
+import { DataTablePagination } from "./_components/data-table-pagination";
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Breadcrumb,
@@ -27,8 +29,15 @@ import {
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import { Eye, Download } from "lucide-react";
-import { ColumnDef } from "@tanstack/react-table";
 import apiClient from "@/lib/api-client";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  SortingState,
+} from "@tanstack/react-table";
 
 export default function AdminUsersPage() {
   const [admins, setAdmins] = useState<Admin[]>([]);
@@ -36,33 +45,9 @@ export default function AdminUsersPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
+  const [sorting, setSorting] = useState<SortingState>([]);
 
-  // Memoize columns so handleEdit/handleDelete are always fresh
-  const allCols = adminColumns(handleEdit, handleDelete);
-
-  // Only data columns (no 'actions')
-  const toggleableColumns = allCols.filter((col) => col.id !== "actions");
-
-  // By default, show all data columns
-  const [visibleColumns, setVisibleColumns] = useState<string[]>(toggleableColumns.map((col) => col.id as string));
-
-  // Fetch admins on mount
-  useEffect(() => {
-    const fetchAdmins = async () => {
-      try {
-        const res = await apiClient.get("/api/admins/");
-        setAdmins(res.data);
-      } catch (err) {
-        toast.error("Could not load admins");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAdmins();
-    // eslint-disable-next-line
-  }, []);
-
-  // Add admin (API)
+  // --- API Handlers ---
   async function handleAddAdmin(adminData: Omit<Admin, "id">) {
     try {
       const res = await apiClient.post("/api/admins/", adminData);
@@ -73,7 +58,6 @@ export default function AdminUsersPage() {
     }
   }
 
-  // Edit admin (API)
   function handleEdit(admin: Admin) {
     setSelectedAdmin(admin);
     setEditOpen(true);
@@ -90,7 +74,6 @@ export default function AdminUsersPage() {
     }
   }
 
-  // Delete admin (API)
   function handleDelete(admin: Admin) {
     setSelectedAdmin(admin);
     setDeleteOpen(true);
@@ -108,22 +91,64 @@ export default function AdminUsersPage() {
     }
   }
 
+  // --- Column and Table Setup ---
+  const allCols = adminColumns(handleEdit, handleDelete);
+  const toggleableColumns = allCols.filter((col) => col.id !== "actions");
+
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(
+    toggleableColumns.map((col) => col.id as string)
+  );
+
+  const visibleCols = allCols.filter(
+    (col) => visibleColumns.includes(col.id as string) || col.id === "actions"
+  );
+
+  const table = useReactTable({
+    data: admins,
+    columns: visibleCols,
+    state: {
+      sorting,
+    },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
+  // --- Data Fetching ---
+  useEffect(() => {
+    const fetchAdmins = async () => {
+      try {
+        const res = await apiClient.get("/api/admins/");
+        setAdmins(res.data);
+      } catch (err) {
+        toast.error("Could not load admins");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAdmins();
+    // eslint-disable-next-line
+  }, []);
+
   // --- Export to CSV ---
   function exportToCSV(data: Admin[], filename: string) {
     if (!data.length) return;
-    // Only export visible columns (not actions)
     const headers = toggleableColumns
       .filter((c) => visibleColumns.includes(c.id as string))
       .map((c) => c.meta?.label || c.id);
+
     const rows = data.map((row) =>
       toggleableColumns
         .filter((c) => visibleColumns.includes(c.id as string))
         .map((c) => {
-          // @ts-ignore
-          return `"${(row[c.id] ?? "").toString().replace(/"/g, '""')}"`;
+          const value = c.id ? row[c.id as keyof Admin] : "";
+          return `"${String(value).replace(/"/g, '""')}"`;
         })
-        .join(","),
+        .join(",")
     );
+
     const csv = [headers.join(","), ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
@@ -134,17 +159,8 @@ export default function AdminUsersPage() {
     window.URL.revokeObjectURL(url);
   }
 
-  // Table columns: visible data columns + always actions
-  const visibleCols: ColumnDef<Admin, any>[] = [
-    ...toggleableColumns.filter((col) => visibleColumns.includes(col.id as string)),
-  ];
-
-  const actionsCol = allCols.find((col) => col.id === "actions");
-  if (actionsCol) visibleCols.push(actionsCol);
-
   return (
     <div className="space-y-6 p-6">
-      {/* Breadcrumb */}
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -159,7 +175,6 @@ export default function AdminUsersPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      {/* Add Admin User Form Card */}
       <Card>
         <CardHeader>
           <CardTitle>Add Admin User</CardTitle>
@@ -169,7 +184,6 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      {/* Admin Users Table Card */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <div>
@@ -177,7 +191,6 @@ export default function AdminUsersPage() {
             <CardDescription>Manage administrators in your system.</CardDescription>
           </div>
           <div className="flex gap-2">
-            {/* View (toggle columns) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="flex gap-2">
@@ -201,7 +214,6 @@ export default function AdminUsersPage() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            {/* Export */}
             <Button
               variant="outline"
               size="sm"
@@ -214,11 +226,13 @@ export default function AdminUsersPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <DataTable columns={visibleCols} data={admins} />
+          <div className="space-y-2">
+            <DataTable table={table} />
+            <DataTablePagination table={table} />
+          </div>
         </CardContent>
       </Card>
 
-      {/* Modals */}
       <EditAdminDialog open={editOpen} onOpenChange={setEditOpen} data={selectedAdmin} onSubmit={handleSaveEdit} />
       <DeleteAdminDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={handleConfirmDelete} />
     </div>

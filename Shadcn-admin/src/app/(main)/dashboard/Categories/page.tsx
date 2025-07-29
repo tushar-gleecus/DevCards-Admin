@@ -172,7 +172,7 @@ export default function CategoriesPage() {
           <div className="mb-2 flex items-center">
             <Input
               type="text"
-              placeholder="Search categories..."
+              placeholder="Search..."
               value={search}
               onChange={handleSearch}
               className="w-72"

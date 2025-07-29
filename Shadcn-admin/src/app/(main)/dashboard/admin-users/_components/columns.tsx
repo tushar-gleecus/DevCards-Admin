@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Admin } from "@/types/admin";
-import { Funnel, ListFilter } from "lucide-react";
+import { Funnel, ListFilter, MoreVertical } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -110,7 +110,7 @@ export const adminColumns = (
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
                 <span className="sr-only">Open menu</span>
-                <ListFilter className="h-4 w-4" />
+                <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

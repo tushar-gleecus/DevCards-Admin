@@ -1,10 +1,18 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+
+import { useEffect, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import type { Deck } from "@/lib/deckApi"; // <-- IMPORTANT
+import type { Deck } from "@/lib/deckApi";
 
 export function EditDeckDialog({
   open,
@@ -15,12 +23,18 @@ export function EditDeckDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   deck: Deck | null;
-  onSave: (id: number, data: { name: string; description: string }) => void;
+  onSave: (id: number, data: Deck) => void;
 }) {
-  const [form, setForm] = useState<Deck | null>(deck);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [status, setStatus] = useState("Active");
 
   useEffect(() => {
-    if (deck) setForm(deck);
+    if (deck) {
+      setName(deck.name);
+      setDescription(deck.description);
+      setStatus(String(deck.status));
+    }
   }, [deck]);
 
   if (!deck) return null;
@@ -31,37 +45,47 @@ export function EditDeckDialog({
         <DialogHeader>
           <DialogTitle>Edit Deck</DialogTitle>
         </DialogHeader>
-        <form
-          className="flex flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!form) return;
-            onSave(form.id, { name: form.name, description: form.description });
-            onOpenChange(false);
-          }}
-        >
-          <div>
-            <Label>Deck Name</Label>
+        <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <Label>Name</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>Description</Label>
             <Input
-              value={form?.name ?? ""}
-              onChange={(e) => setForm((f) => (f ? { ...f, name: e.target.value } : null))}
-              required
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
             />
           </div>
-          <div className="mt-3">
-            <Label>Deck Description</Label>
-            <Input
-              value={form?.description ?? ""}
-              onChange={(e) => setForm((f) => (f ? { ...f, description: e.target.value } : null))}
-              required
-            />
+          <div className="space-y-2">
+            <Label>Status</Label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-full rounded border border-zinc-400 px-2 py-2 text-sm focus:border-zinc-600"
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
           </div>
-          <DialogFooter>
-            <Button type="submit" className="w-full">
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </form>
+        </div>
+        <DialogFooter className="gap-2">
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button
+            onClick={() =>
+              onSave(deck.id, {
+                ...deck,
+                name,
+                description,
+                status: status === "Active",
+              })
+            }
+          >
+            Save Changes
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
