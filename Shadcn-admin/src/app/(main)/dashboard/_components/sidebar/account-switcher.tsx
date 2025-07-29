@@ -1,4 +1,3 @@
-//account-switcher
 "use client";
 
 import { useEffect, useState } from "react";
@@ -22,7 +21,9 @@ export function AccountSwitcher() {
     photo: "",
   });
 
-  // Helper to update user state from localStorage
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
   const loadUserFromStorage = () => {
     setUser({
       name: localStorage.getItem("admin_name") || "Admin",
@@ -34,12 +35,16 @@ export function AccountSwitcher() {
   useEffect(() => {
     loadUserFromStorage();
 
-    // Listen for changes to localStorage (cross-tab and same tab via custom event)
     function handleStorageChange(e: StorageEvent) {
-      if (e.key === "admin_photo" || e.key === "admin_name" || e.key === "admin_email") {
+      if (
+        e.key === "admin_photo" ||
+        e.key === "admin_name" ||
+        e.key === "admin_email"
+      ) {
         loadUserFromStorage();
       }
     }
+
     function handleProfilePhotoChanged() {
       loadUserFromStorage();
     }
@@ -53,33 +58,29 @@ export function AccountSwitcher() {
     };
   }, []);
 
-const handleLogout = async () => {
-  try {
-    await apiClient.post("/api/admins/logout/");
-    toast.success("Logged out successfully");
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    setMenuOpen(true); // Keep dropdown open
 
-    setTimeout(() => {
-      // Clear localStorage
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("admin_id");
-      localStorage.removeItem("admin_name");
-      localStorage.removeItem("admin_email");
-      localStorage.removeItem("admin_photo");
+    try {
+      await apiClient.post("/api/admins/logout/");
+      toast.success("Logged out successfully");
 
-      // 🔥 Delete the cookie
-      document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-
-      // Redirect
-      window.location.href = "/auth/v1/login";
-    }, 1500);
-  } catch (err) {
-    toast.error("Error while logging out");
-  }
-};
-
+      setTimeout(() => {
+        localStorage.clear();
+        document.cookie =
+          "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+        window.location.href = "/auth/v1/login";
+      }, 1500);
+    } catch (err) {
+      toast.error("Error while logging out");
+      setIsLoggingOut(false);
+      setMenuOpen(true); // Keep it open in case of failure
+    }
+  };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={menuOpen} onOpenChange={(open) => !isLoggingOut && setMenuOpen(open)}>
       <DropdownMenuTrigger asChild>
         <Avatar className="cursor-pointer">
           <AvatarImage src={user.photo} />
@@ -90,22 +91,48 @@ const handleLogout = async () => {
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-0.5">
             <p className="text-sm leading-none font-medium">{user.name}</p>
-            <p className="text-muted-foreground text-xs leading-none">{user.email}</p>
+            <p className="text-muted-foreground text-xs leading-none">
+              {user.email}
+            </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => (window.location.href = "/dashboard/profile")}>
+        <DropdownMenuItem
+          onClick={() => {
+            if (!isLoggingOut) {
+              window.location.href = "/dashboard/profile";
+            }
+          }}
+        >
           <UserIcon className="mr-2 h-4 w-4" />
           <span>Profile</span>
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => {
+            if (!isLoggingOut) {
+              toast.info("No notifications to show");
+            }
+          }}
+        >
           <Bell className="mr-2 h-4 w-4" />
           <span>Notifications</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
+        <DropdownMenuItem
+          onClick={!isLoggingOut ? handleLogout : undefined}
+          disabled={isLoggingOut}
+        >
+          {isLoggingOut ? (
+            <div className="flex items-center gap-2">
+              <span className="animate-spin h-4 w-4 border-2 border-foreground border-t-transparent rounded-full" />
+              Logging out...
+            </div>
+          ) : (
+            <>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </>
+          )}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

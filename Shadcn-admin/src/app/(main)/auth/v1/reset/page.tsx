@@ -1,4 +1,3 @@
-//v1/reset
 "use client";
 
 import { useState } from "react";
@@ -11,10 +10,16 @@ import { Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import apiClient from "@/lib/api-client";
 
-// Use correct naming to match backend!
 const FormSchema = z
   .object({
     password: z.string().min(6, { message: "Password must be at least 6 characters." }),
@@ -28,6 +33,7 @@ const FormSchema = z
 export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -38,12 +44,15 @@ export default function ResetPasswordPage() {
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    setIsSubmitting(true);
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get("token");
       const uid = urlParams.get("uid");
 
       if (!token || !uid) throw new Error("Invalid or missing token or uid");
+
+      await new Promise((res) => setTimeout(res, 1500)); // Simulated delay
 
       await apiClient.post("/api/admins/password/reset/done/", {
         uid,
@@ -52,24 +61,23 @@ export default function ResetPasswordPage() {
         password_confirm: data.password_confirm,
       });
 
-      toast.success("Password reset successful. You can now log in.", { duration: 5000 });
+      toast.success("Password reset successful. You can now log in.");
       window.location.href = "/auth/v1/login";
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || "Something went wrong", {
-        duration: 5000,
-      });
+      toast.error(err.response?.data?.detail || "Something went wrong");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="flex h-dvh">
-      {/* Form Section */}
       <div className="bg-background flex w-full items-center justify-center p-8 lg:w-2/3">
         <div className="w-full max-w-md space-y-10 py-24 lg:py-32">
           <div className="space-y-4 text-center">
             <div className="text-3xl font-medium tracking-tight">Reset Password to continue</div>
             <div className="text-muted-foreground mx-auto max-w-xl">
-              Fill in your new password below. We promise not to quiz you about your first pet&apos;s name (this time).
+              Fill in your new password below.
             </div>
           </div>
 
@@ -80,7 +88,7 @@ export default function ResetPasswordPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>New Password</FormLabel>
                     <div className="relative">
                       <FormControl>
                         <Input
@@ -93,7 +101,7 @@ export default function ResetPasswordPage() {
                       </FormControl>
                       <button
                         type="button"
-                        className="text-muted-foreground absolute top-2/4 right-3 -translate-y-1/2 transform"
+                        className="absolute top-2/4 right-3 -translate-y-1/2 text-muted-foreground"
                         onClick={() => setShowPassword((prev) => !prev)}
                         tabIndex={-1}
                       >
@@ -104,6 +112,7 @@ export default function ResetPasswordPage() {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="password_confirm"
@@ -122,7 +131,7 @@ export default function ResetPasswordPage() {
                       </FormControl>
                       <button
                         type="button"
-                        className="text-muted-foreground absolute top-2/4 right-3 -translate-y-1/2 transform"
+                        className="absolute top-2/4 right-3 -translate-y-1/2 text-muted-foreground"
                         onClick={() => setShowConfirmPassword((prev) => !prev)}
                         tabIndex={-1}
                       >
@@ -133,33 +142,41 @@ export default function ResetPasswordPage() {
                   </FormItem>
                 )}
               />
-              <Button className="w-full" type="submit">
-                Reset
-              </Button>
+
+              <Button className="w-full" type="submit" disabled={isSubmitting}>
+  {isSubmitting ? (
+    <div className="flex items-center justify-center gap-2">
+      <div className="h-4 w-4 rounded-full border-2 border-t-2 border-muted-foreground border-t-transparent animate-spin" />
+      Resetting...
+    </div>
+  ) : (
+    "Reset"
+  )}
+</Button>
+
             </form>
           </Form>
 
-          <p className="text-muted-foreground text-s text-center">
+          <p className="text-muted-foreground text-sm text-center">
             Already have an account?{" "}
-            <Link href="login" className="text-primary cursor-pointer hover:underline">
+            <Link href="/auth/v1/login" className="text-primary hover:underline">
               Login
             </Link>
           </p>
         </div>
       </div>
 
-      {/* Illustration Section */}
       <div className="bg-primary hidden lg:block lg:w-1/3">
         <div className="flex h-full flex-col items-center justify-center p-12 text-center">
           <div className="space-y-6">
             <img
               src="/reset.jpg"
-              alt="Welcome Illustration"
+              alt="Reset Illustration"
               className="mx-auto h-32 w-32 rounded-full border-4 border-white object-contain shadow-md"
             />
-            <div className="flex flex-col items-center justify-center space-y-2">
-              <h1 className="text-primary-foreground text-center text-5xl font-light">DevHub Admin</h1>
-              <p className="text-primary-foreground/80 text-center text-xl">Build for developers, by developers....</p>
+            <div className="flex flex-col items-center space-y-2">
+              <h1 className="text-primary-foreground text-4xl font-light">DevHub Admin</h1>
+              <p className="text-primary-foreground/80 text-xl">Build for developers, by developers…</p>
             </div>
           </div>
         </div>
