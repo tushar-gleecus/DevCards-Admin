@@ -8,7 +8,11 @@ const nextConfig = {
         port: '8000',
         pathname: '/media/**',
       },
-      // add your prod host here if needed
+      {
+        protocol: 'https',
+        hostname: 'plpmyfzzbnwjbwkxiymd.supabase.co',
+        pathname: '/storage/v1/object/public/admin-photos/**',
+      },
     ],
   },
   compiler: {
