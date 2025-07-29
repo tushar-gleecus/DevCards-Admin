@@ -1,4 +1,3 @@
-//v1/create_password
 "use client";
 
 import { useState } from "react";
@@ -14,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
-// Use correct names matching API!
 const FormSchema = z
   .object({
     password: z.string().min(6, { message: "Password must be at least 6 characters." }),
@@ -28,6 +26,7 @@ const FormSchema = z
 export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -38,6 +37,7 @@ export default function ResetPasswordPage() {
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    setIsSubmitting(true);
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get("token");
@@ -58,12 +58,13 @@ export default function ResetPasswordPage() {
       toast.error(err.response?.data?.detail || "Something went wrong", {
         duration: 5000,
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="flex h-dvh">
-      {/* Form Section */}
       <div className="bg-background flex w-full items-center justify-center p-8 lg:w-2/3">
         <div className="w-full max-w-md space-y-10 py-24 lg:py-32">
           <div className="space-y-4 text-center">
@@ -134,8 +135,15 @@ export default function ResetPasswordPage() {
                   </FormItem>
                 )}
               />
-              <Button className="w-full" type="submit">
-                Submit
+              <Button className="w-full" type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                    Submitting...
+                  </div>
+                ) : (
+                  "Submit"
+                )}
               </Button>
             </form>
           </Form>
@@ -149,7 +157,6 @@ export default function ResetPasswordPage() {
         </div>
       </div>
 
-      {/* Illustration Section */}
       <div className="bg-primary hidden lg:block lg:w-1/3">
         <div className="flex h-full flex-col items-center justify-center p-12 text-center">
           <div className="space-y-6">

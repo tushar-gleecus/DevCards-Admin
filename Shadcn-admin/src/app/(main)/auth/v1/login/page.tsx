@@ -10,10 +10,23 @@ import { toast } from "sonner";
 import { MailCheck, Eye, EyeOff } from "lucide-react";
 import Cookies from "js-cookie";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import apiClient from "@/lib/api-client";
 import { Input } from "@/components/ui/input";
 
@@ -37,6 +50,9 @@ function LoginV1() {
   const [showResetForm, setShowResetForm] = useState(false);
   const [showResetSent, setShowResetSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // loading spinner state
+  const [isResetting, setIsResetting] = useState(false);
+
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -59,6 +75,7 @@ function LoginV1() {
   });
 
   const onLoginSubmit = async (data: z.infer<typeof LoginSchema>) => {
+    setIsLoading(true); // start loading
     try {
       const res = await apiClient.post("/api/admins/login/", {
         email: data.email,
@@ -70,7 +87,10 @@ function LoginV1() {
       localStorage.setItem("access_token", result.token);
       Cookies.set("access_token", result.token, { expires: 7 });
       localStorage.setItem("admin_id", result.admin.id);
-      localStorage.setItem("admin_name", `${result.admin.first_name || ""} ${result.admin.last_name || ""}`.trim());
+      localStorage.setItem(
+        "admin_name",
+        `${result.admin.first_name || ""} ${result.admin.last_name || ""}`.trim()
+      );
       localStorage.setItem("admin_email", result.admin.email || "");
       localStorage.setItem("admin_photo", result.admin.photo || "/avatars/neutral.jpg");
 
@@ -78,19 +98,24 @@ function LoginV1() {
       router.push(next || "/dashboard/default");
     } catch (err: any) {
       toast.error(err.response?.data?.detail || "Login failed");
+      setIsLoading(false); // stop loading on error
     }
   };
 
   const onResetSubmit = async (data: z.infer<typeof ResetSchema>) => {
-    try {
-      await apiClient.post("/api/admins/password/reset/", { email: data.email });
-      toast.success("Reset link sent");
-      setShowResetForm(false);
-      setShowResetSent(true);
-    } catch (err: any) {
-      toast.error(err.response?.data?.detail || "Reset failed");
-    }
-  };
+  setIsResetting(true);
+  try {
+    await apiClient.post("/api/admins/password/reset/", { email: data.email });
+    toast.success("Reset link sent");
+    setShowResetForm(false);
+    setShowResetSent(true);
+  } catch (err: any) {
+    toast.error(err.response?.data?.detail || "Reset failed");
+  } finally {
+    setIsResetting(false);
+  }
+};
+
 
   return (
     <div className="flex h-dvh">
@@ -105,7 +130,9 @@ function LoginV1() {
             />
             <div className="space-y-2">
               <h1 className="text-primary-foreground text-5xl font-light">DevHub Admin</h1>
-              <p className="text-primary-foreground/80 text-xl">Build for developers, by developers...</p>
+              <p className="text-primary-foreground/80 text-xl">
+                Build for developers, by developers...
+              </p>
             </div>
           </div>
         </div>
@@ -130,7 +157,13 @@ function LoginV1() {
                   <FormItem>
                     <FormLabel>Email Address</FormLabel>
                     <FormControl>
-                      <Input id="email" type="email" placeholder="you@example.com" autoComplete="email" {...field} />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="you@example.com"
+                        autoComplete="email"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -184,8 +217,17 @@ function LoginV1() {
                   </FormItem>
                 )}
               />
-              <Button className="w-full" type="submit">
-                Login
+
+              {/* Spinner-enhanced Button */}
+              <Button className="w-full" type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                    Logging in...
+                  </div>
+                ) : (
+                  "Login"
+                )}
               </Button>
             </form>
           </Form>
@@ -230,9 +272,17 @@ function LoginV1() {
                 )}
               />
               <DialogFooter className="pt-2">
-                <Button type="submit" className="w-full">
-                  Send Reset Link
-                </Button>
+                <Button type="submit" className="w-full" disabled={isResetting}>
+  {isResetting ? (
+    <div className="flex items-center justify-center gap-2">
+      <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+      Sending...
+    </div>
+  ) : (
+    "Send Reset Link"
+  )}
+</Button>
+
               </DialogFooter>
             </form>
           </Form>
