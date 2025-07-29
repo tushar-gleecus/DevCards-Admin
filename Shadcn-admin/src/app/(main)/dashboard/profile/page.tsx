@@ -94,20 +94,24 @@ export default function AdminProfilePage() {
       .get(`/api/admins/${adminId}/`)
       .then((res) => {
         const data = res.data;
-        setFormData({
-          id: data.id || "",
-          email: data.email || "",
-          first_name: data.first_name || "",
-          last_name: data.last_name || "",
-          phone: data.phone || "",
-          city: data.city || "",
-          country: data.country || "",
-          photo: data.photo || null,
-        });
+        const normalizedPhoto = getProfileImageSrc(data.photo);
+
+setFormData({
+  id: data.id || "",
+  email: data.email || "",
+  first_name: data.first_name || "",
+  last_name: data.last_name || "",
+  phone: data.phone || "",
+  city: data.city || "",
+  country: data.country || "",
+  photo: normalizedPhoto,
+});
+
         // Update localStorage (for name, email, photo) for use in AccountSwitcher
         localStorage.setItem("admin_name", (data.first_name || "") + (data.last_name ? ` ${data.last_name}` : ""));
         localStorage.setItem("admin_email", data.email || "");
-        localStorage.setItem("admin_photo", data.photo || "/avatars/neutral.jpg");
+        localStorage.setItem("admin_photo", normalizedPhoto);
+
       })
       .catch(() => {
         toast.error("Could not fetch profile.");
