@@ -53,22 +53,30 @@ export function AccountSwitcher() {
     };
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await apiClient.post("/api/admins/logout/");
-      toast.success("Logged out successfully");
-      setTimeout(() => {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("admin_id");
-        localStorage.removeItem("admin_name");
-        localStorage.removeItem("admin_email");
-        localStorage.removeItem("admin_photo");
-        window.location.href = "/auth/v1/login";
-      }, 1500);
-    } catch (err) {
-      toast.error("Error while logging out");
-    }
-  };
+const handleLogout = async () => {
+  try {
+    await apiClient.post("/api/admins/logout/");
+    toast.success("Logged out successfully");
+
+    setTimeout(() => {
+      // Clear localStorage
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("admin_id");
+      localStorage.removeItem("admin_name");
+      localStorage.removeItem("admin_email");
+      localStorage.removeItem("admin_photo");
+
+      // 🔥 Delete the cookie
+      document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+
+      // Redirect
+      window.location.href = "/auth/v1/login";
+    }, 1500);
+  } catch (err) {
+    toast.error("Error while logging out");
+  }
+};
+
 
   return (
     <DropdownMenu>
