@@ -34,9 +34,13 @@ import apiClient from "@/lib/api-client";
 
 // -- helper to always return a valid image src
 function getProfileImageSrc(photo: string | null | undefined) {
+  const SUPABASE_BUCKET_BASE =
+    "https://plpmyfzzbnwjbwkxiymd.supabase.co/storage/v1/object/public/admin-photos";
+
   if (!photo) return "/woman-whisper.jpg";
   if (photo.startsWith("http")) return photo;
-  return photo.startsWith("/") ? photo : "/" + photo;
+
+  return `${SUPABASE_BUCKET_BASE}/${photo.replace(/^\/?/, "")}`;
 }
 
 const COUNTRY_LIST = [
@@ -216,7 +220,8 @@ export default function AdminProfilePage() {
         photo: result.photo_url ?? prev.photo,
       }));
       // ---- LOCAL STORAGE UPDATE ----
-      localStorage.setItem("admin_photo", result.photo_url);
+      localStorage.setItem("admin_photo", getProfileImageSrc(result.photo_url));
+
       window.dispatchEvent(new Event("profile-photo-changed"));
       // -----------------------------
       setSelectedPhoto(null);
