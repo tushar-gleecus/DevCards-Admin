@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 import { UICategory, UIDeck } from "@/types/category-ui";
 
 interface EditCategoryDrawerProps {
@@ -35,6 +36,7 @@ export function EditCategoryDrawer({ category, decks = [], onClose, onSave }: Ed
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<string>("true");
   const [deckId, setDeckId] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (category) {
@@ -47,9 +49,15 @@ export function EditCategoryDrawer({ category, decks = [], onClose, onSave }: Ed
     }
   }, [category, decks]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (category) {
-      onSave(Number(category.id), { name, description, status: status === "true" ? "Active" : "Inactive", deckId: Number(deckId) });
+      setIsLoading(true);
+      try {
+        await onSave(Number(category.id), { name, description, status: status === "true" ? "Active" : "Inactive", deckId: Number(deckId) });
+        onClose();
+      } finally {
+        setTimeout(() => setIsLoading(false), 500);
+      }
     }
   };
 
@@ -68,11 +76,12 @@ export function EditCategoryDrawer({ category, decks = [], onClose, onSave }: Ed
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                disabled={isLoading}
               />
             </div>
             <div className="col-span-1 space-y-2">
               <Label htmlFor="deckId">Deck<span className="text-red-500">*</span></Label>
-              <Select name="deckId" value={deckId} onValueChange={setDeckId}>
+              <Select name="deckId" value={deckId} onValueChange={setDeckId} disabled={isLoading}>
                 <SelectTrigger id="deckId" className="w-full">
                   <SelectValue placeholder="Select a deck" />
                 </SelectTrigger>
@@ -87,7 +96,7 @@ export function EditCategoryDrawer({ category, decks = [], onClose, onSave }: Ed
             </div>
             <div className="col-span-1 space-y-2">
               <Label htmlFor="status">Status</Label>
-              <Select value={status} onValueChange={setStatus}>
+              <Select value={status} onValueChange={setStatus} disabled={isLoading}>
                 <SelectTrigger id="status">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
@@ -104,12 +113,17 @@ export function EditCategoryDrawer({ category, decks = [], onClose, onSave }: Ed
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="h-full"
+                disabled={isLoading}
               />
             </div>
             <div className="col-span-3 flex justify-center gap-2 mt-4">
-              <Button onClick={handleSave}>Save changes</Button>
+              <Button onClick={handleSave} disabled={isLoading}>
+                {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : "Save changes"}
+              </Button>
               <DrawerClose asChild>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline" onClick={onClose} disabled={isLoading}>
+                  Cancel
+                </Button>
               </DrawerClose>
             </div>
           </div>

@@ -30,7 +30,7 @@ export function DeckForm({ deck, onAddDeck }: { deck?: Deck, onAddDeck: (data: {
       await onAddDeck(form);
       setForm({ name: "", description: "" });
     } finally {
-      setIsLoading(false);
+      setTimeout(() => setIsLoading(false), 500);
     }
   };
 
@@ -45,7 +45,7 @@ export function DeckForm({ deck, onAddDeck }: { deck?: Deck, onAddDeck: (data: {
         <Textarea id="description" name="description" value={form.description} onChange={handleChange} className="min-h-[96px]" disabled={isLoading} />
       </div>
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (deck ? "Save Changes" : "Create Deck")}
+        {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {deck ? "Saving Changes..." : "Creating Deck..."}</> : (deck ? "Save Changes" : "Create Deck")}
       </Button>
     </form>
   );

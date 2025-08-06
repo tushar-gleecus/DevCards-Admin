@@ -52,7 +52,7 @@ export function EditDeckDrawer({ deck, onClose, onSave }: EditDeckDrawerProps) {
         await onSave(deck.id, { name, description });
         onClose();
       } finally {
-        setIsLoading(false);
+        setTimeout(() => setIsLoading(false), 500);
       }
     }
   };
@@ -99,7 +99,7 @@ export function EditDeckDrawer({ deck, onClose, onSave }: EditDeckDrawerProps) {
             </div>
             <div className="col-span-3 flex justify-center gap-2 mt-4">
               <Button onClick={handleSave} disabled={isLoading}>
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save changes"}
+                {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : "Save changes"}
               </Button>
               <DrawerClose asChild>
                 <ActionButton variant="outline" onClick={onClose} disabled={isLoading}>

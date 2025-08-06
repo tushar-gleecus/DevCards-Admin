@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Eye, EyeOff, MoreHorizontal, ArrowUpAZ, Funnel, Download } from "lucide-react";
+import { Eye, EyeOff, MoreHorizontal, ArrowUpAZ, Funnel, Download, Loader2 } from "lucide-react";
 import type { CardContent } from "@/types/card-content";
 
 const COLUMN_CONFIG = [
@@ -88,6 +88,20 @@ export function CardContentTable({
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [deleteCardId, setDeleteCardId] = useState<number | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteConfirm = async () => {
+    if (deleteCardId) {
+      setIsDeleting(true);
+      try {
+        await onDelete(deleteCardId);
+        setConfirmDeleteOpen(false);
+        setDeleteCardId(null);
+      } finally {
+        setTimeout(() => setIsDeleting(false), 500);
+      }
+    }
+  };
   const [filterOpen, setFilterOpen] = useState<{
     [key in SortKey]?: boolean;
   }>({});
@@ -371,18 +385,13 @@ export function CardContentTable({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
-              onClick={() => {
-                if (deleteCardId) {
-                  onDelete(deleteCardId);
-                  setConfirmDeleteOpen(false);
-                  setDeleteCardId(null);
-                }
-              }}
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
             >
-              Confirm Delete
+              {isDeleting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...</> : "Confirm Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

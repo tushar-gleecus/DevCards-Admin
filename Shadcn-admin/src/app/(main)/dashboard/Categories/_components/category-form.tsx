@@ -5,12 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
 import type { Category, Deck } from "@/lib/categoryApi";
 
 
 
 export function CategoryForm({ category, decks, onCreate, onSave }: { category?: Category, decks: Deck[], onCreate?: (cat: { name: string; description: string; deckId: number }) => void, onSave?: (cat: { name: string; description: string; deckId: number }) => void }) {
   const [form, setForm] = useState({ name: "", description: "", deckId: 0 });
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (category) {
@@ -28,15 +30,21 @@ export function CategoryForm({ category, decks, onCreate, onSave }: { category?:
     setForm({ ...form, deckId: Number(value) });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim() || !form.description.trim() || !form.deckId) return;
-    if (category && onSave) {
-      onSave(form);
-    } else if (onCreate) {
-      onCreate(form);
+
+    setIsLoading(true);
+    try {
+      if (category && onSave) {
+        await onSave(form);
+      } else if (onCreate) {
+        await onCreate(form);
+      }
+      setForm({ name: "", description: "", deckId: decks.length > 0 ? Number(decks[0].id) : 0 });
+    } finally {
+      setTimeout(() => setIsLoading(false), 500);
     }
-    setForm({ name: "", description: "", deckId: decks.length > 0 ? Number(decks[0].id) : 0 });
   };
 
   return (
@@ -64,8 +72,8 @@ export function CategoryForm({ category, decks, onCreate, onSave }: { category?:
           </SelectContent>
         </Select>
       </div>
-      <Button type="submit" className="w-full">
-        {category ? "Save Changes" : "Create Category"}
+      <Button type="submit" className="w-full" disabled={isLoading}>
+        {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {category ? "Saving Changes..." : "Creating Category..."}</> : (category ? "Save Changes" : "Create Category")}
       </Button>
     </form>
   );
