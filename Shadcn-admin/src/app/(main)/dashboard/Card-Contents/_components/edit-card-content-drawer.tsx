@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 import type { CardContent } from "@/types/card-content";
 
 interface EditCardContentDrawerProps {
@@ -28,15 +29,21 @@ interface EditCardContentDrawerProps {
 
 export function EditCardContentDrawer({ cardContent, onClose, onSave }: EditCardContentDrawerProps) {
   const [newStatus, setNewStatus] = useState<"Published" | "Inactive" | undefined>();
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setNewStatus(undefined);
   }, [cardContent]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (cardContent && newStatus && typeof cardContent.id === 'number') {
-      onSave(cardContent.id, { status: newStatus });
-      onClose();
+      setIsLoading(true);
+      try {
+        await onSave(cardContent.id, { status: newStatus });
+        onClose();
+      } finally {
+        setTimeout(() => setIsLoading(false), 500);
+      }
     }
   };
 
@@ -68,7 +75,7 @@ export function EditCardContentDrawer({ cardContent, onClose, onSave }: EditCard
           <div className="grid grid-cols-3 gap-4">
             <div className="col-span-1 space-y-2">
               <Label htmlFor="status">Action</Label>
-              <Select value={newStatus} onValueChange={(value: "Published" | "Inactive") => setNewStatus(value)}>
+              <Select value={newStatus} onValueChange={(value: "Published" | "Inactive") => setNewStatus(value)} disabled={isLoading}>
                 <SelectTrigger id="status">
                   <SelectValue placeholder="Select action..." />
                 </SelectTrigger>
@@ -78,9 +85,13 @@ export function EditCardContentDrawer({ cardContent, onClose, onSave }: EditCard
               </Select>
             </div>
             <div className="col-span-3 flex justify-center gap-2 mt-4">
-              <Button onClick={handleSave} disabled={!newStatus}>Save changes</Button>
+              <Button onClick={handleSave} disabled={!newStatus || isLoading}>
+                {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : "Save changes"}
+              </Button>
               <DrawerClose asChild>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline" onClick={onClose} disabled={isLoading}>
+                  Cancel
+                </Button>
               </DrawerClose>
             </div>
           </div>

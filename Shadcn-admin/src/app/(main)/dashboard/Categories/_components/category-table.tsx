@@ -30,6 +30,7 @@ import {
   Eye,
   EyeOff,
   Download,
+  Loader2,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -126,6 +127,20 @@ export function CategoryTable({
   const [filters, setFilters] = useState<{ [key in SortKey]?: string }>({});
   const [deleteCategoryId, setDeleteCategoryId] = useState<number | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteConfirm = async () => {
+    if (deleteCategoryId) {
+      setIsDeleting(true);
+      try {
+        await onDeleteCategory(deleteCategoryId);
+        setConfirmDeleteOpen(false);
+        setDeleteCategoryId(null);
+      } finally {
+        setTimeout(() => setIsDeleting(false), 500);
+      }
+    }
+  }
 
   function applyFilters(list: UICategory[]): UICategory[] {
     return list.filter((category) => {
@@ -475,18 +490,13 @@ export function CategoryTable({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
-              onClick={() => {
-                if (deleteCategoryId) {
-                  onDeleteCategory(deleteCategoryId);
-                  setConfirmDeleteOpen(false);
-                  setDeleteCategoryId(null);
-                }
-              }}
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
             >
-              Confirm Delete
+              {isDeleting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...</> : "Confirm Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

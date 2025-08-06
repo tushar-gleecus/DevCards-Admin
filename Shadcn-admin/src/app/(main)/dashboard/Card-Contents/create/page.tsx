@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getCategories, Category } from "@/lib/categoryApi";
 import { createCardContent } from "@/lib/cardContentApi";
@@ -33,6 +34,7 @@ export default function CreateCardPage() {
   const [category, setCategory] = useState<number | null>(null);
   const [richText, setRichText] = useState("");
   const [status, setStatus] = useState<"draft" | "published">("draft");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     getCategories().then(setCategories);
@@ -40,6 +42,7 @@ export default function CreateCardPage() {
 
   const handleSave = async (saveAsDraft: boolean = false) => {
     if (name && shortDesc && category && richText) {
+      setIsSaving(true);
       try {
         await createCardContent({
           name,
@@ -54,6 +57,8 @@ export default function CreateCardPage() {
       } catch (error) {
         console.error("Failed to create card:", error);
         // Optionally, show an error message to the user
+      } finally {
+        setTimeout(() => setIsSaving(false), 500);
       }
     }
   };
@@ -94,6 +99,7 @@ export default function CreateCardPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="border"
+              disabled={isSaving}
             />
           </div>
           <div>
@@ -104,11 +110,12 @@ export default function CreateCardPage() {
               value={shortDesc}
               onChange={(e) => setShortDesc(e.target.value)}
               className="border"
+              disabled={isSaving}
             />
           </div>
           <div>
             <label htmlFor="category">Category</label>
-            <Select onValueChange={(value) => setCategory(Number(value))}>
+            <Select onValueChange={(value) => setCategory(Number(value))} disabled={isSaving}>
               <SelectTrigger id="category" className="border">
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
@@ -130,19 +137,21 @@ export default function CreateCardPage() {
         </CardHeader>
         <CardContent>
           <div style={{ minHeight: '200px' }}>
-            <MuiTipTapEditor content={richText} onContentChange={setRichText} />
+            <MuiTipTapEditor content={richText} onContentChange={setRichText} disabled={isSaving} />
           </div>
         </CardContent>
       </Card>
 
       <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={() => router.back()}>
+        <Button variant="outline" onClick={() => router.back()} disabled={isSaving}>
           Cancel
         </Button>
-        <Button variant="outline" onClick={() => handleSave(true)}>
-          Save as Draft
+        <Button variant="outline" onClick={() => handleSave(true)} disabled={isSaving}>
+          {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving Draft...</> : "Save as Draft"}
         </Button>
-        <Button onClick={() => handleSave(false)}>Publish</Button>
+        <Button onClick={() => handleSave(false)} disabled={isSaving}>
+          {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...</> : "Publish"}
+        </Button>
       </div>
     </div>
   );

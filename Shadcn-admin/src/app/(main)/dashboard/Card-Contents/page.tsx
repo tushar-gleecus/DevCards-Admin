@@ -16,6 +16,8 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Card, CardContent as CardContentComponent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 import { SectionCards } from './_components/section-cards';
 import { ChartAreaInteractive } from './_components/chart-area-interactive';
@@ -33,6 +35,7 @@ export default function CardContentPage() {
   const [editingCardContent, setEditingCardContent] = useState<CardContent | null>(null);
   const [viewingCardContent, setViewingCardContent] = useState<CardContent | null>(null);
   const [categoryMap, setCategoryMap] = useState<Record<number, { name: string; deckName: string }>>({});
+  const [isCreatingCard, setIsCreatingCard] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -109,12 +112,16 @@ export default function CardContentPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Card Content</CardTitle>
-            <Link
-              href="/dashboard/Card-Contents/create"
-              className="bg-primary text-white px-4 py-2 rounded-md text-sm hover:bg-primary/90"
+            <Button
+              onClick={async () => {
+                setIsCreatingCard(true);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                window.location.href = "/dashboard/Card-Contents/create";
+              }}
+              disabled={isCreatingCard}
             >
-              + Create Card
-            </Link>
+              {isCreatingCard ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...</> : "+ Create Card"}
+            </Button>
           </div>
         </CardHeader>
         <CardContentComponent>

@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getCategories, Category } from "@/lib/categoryApi";
 import { getPublicCard, updateCardContent } from "@/lib/cardContentApi";
@@ -36,6 +37,7 @@ export default function EditCardPage() {
   const [category, setCategory] = useState<number | null>(null);
   const [richText, setRichText] = useState("");
   const [status, setStatus] = useState<"draft" | "published" | "inactive">("draft");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     getCategories().then(setCategories);
@@ -53,6 +55,7 @@ export default function EditCardPage() {
 
   const handleSave = async () => {
     if (id && name && shortDesc && category && richText) {
+      setIsLoading(true);
       try {
         await updateCardContent(id, {
           name,
@@ -68,6 +71,8 @@ export default function EditCardPage() {
         router.push("/dashboard/Card-Contents");
       } catch (error) {
         console.error("Failed to update card:", error);
+      } finally {
+        setTimeout(() => setIsLoading(false), 500);
       }
     }
   };
@@ -107,6 +112,7 @@ export default function EditCardPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="border"
+              disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
@@ -117,11 +123,12 @@ export default function EditCardPage() {
               value={shortDesc}
               onChange={(e) => setShortDesc(e.target.value)}
               className="border"
+              disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
             <label htmlFor="category">Category</label>
-            <Select value={category?.toString()} onValueChange={(value) => setCategory(Number(value))}>
+            <Select value={category?.toString()} onValueChange={(value) => setCategory(Number(value))} disabled={isLoading}>
               <SelectTrigger id="category" className="border">
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
@@ -136,16 +143,18 @@ export default function EditCardPage() {
           </div>
           <div className="space-y-2">
             <label>Card Content</label>
-            <MuiTipTapEditor content={richText} onContentChange={setRichText} />
+            <MuiTipTapEditor content={richText} onContentChange={setRichText} disabled={isLoading} />
           </div>
         </CardContent>
       </Card>
 
       <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={() => router.back()}>
+        <Button variant="outline" onClick={() => router.back()} disabled={isLoading}>
           Cancel
         </Button>
-        <Button onClick={handleSave}>Save Changes</Button>
+        <Button onClick={handleSave} disabled={isLoading}>
+          {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : "Save Changes"}
+        </Button>
       </div>
     </div>
   );

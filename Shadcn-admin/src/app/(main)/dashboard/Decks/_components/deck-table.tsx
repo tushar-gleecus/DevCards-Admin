@@ -108,8 +108,10 @@ export function DecksDataTable({
       try {
         await onDeleteDeck(deckToDelete);
         setDeckToDelete(null);
+      } catch (error) {
+        console.error("Failed to delete deck:", error);
       } finally {
-        setIsDeleting(false);
+        setTimeout(() => setIsLoading(false), 500);
       }
     }
   };
