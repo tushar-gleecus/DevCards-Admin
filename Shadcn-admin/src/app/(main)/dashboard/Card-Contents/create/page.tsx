@@ -137,7 +137,7 @@ export default function CreateCardPage() {
         </CardHeader>
         <CardContent>
           <div style={{ minHeight: '200px' }}>
-            <MuiTipTapEditor content={richText} onContentChange={setRichText} disabled={isSaving} />
+            <MuiTipTapEditor content={richText} onContentChange={setRichText} editable={!isSaving} />
           </div>
         </CardContent>
       </Card>
