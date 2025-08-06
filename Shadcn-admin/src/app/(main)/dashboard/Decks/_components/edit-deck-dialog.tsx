@@ -10,7 +10,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { ActionButton } from "@/components/ui/ActionButton";
 import { Label } from "@/components/ui/label";
 import type { Deck } from "@/lib/deckApi";
 
@@ -71,20 +71,23 @@ export function EditDeckDialog({
         </div>
         <DialogFooter className="gap-2">
           <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
+            <ActionButton variant="outline" onClick={async () => { onOpenChange(false); await new Promise(res => setTimeout(res, 400)); }}>
+  Cancel
+</ActionButton>
           </DialogClose>
-          <Button
-            onClick={() =>
-              onSave(deck.id, {
-                ...deck,
-                name,
-                description,
-                status: status === "Active",
-              })
-            }
-          >
-            Save Changes
-          </Button>
+          <ActionButton
+  onClick={async () => {
+    onSave(deck.id, {
+      ...deck,
+      name,
+      description,
+      status: status === "Active",
+    });
+    await new Promise(res => setTimeout(res, 400));
+  }}
+>
+  Save Changes
+</ActionButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

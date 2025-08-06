@@ -17,11 +17,13 @@ import { Chart } from "./_components/chart";
 import { toast } from "sonner";
 import { getDecks, createDeck, updateDeck, deleteDeck, Deck } from "@/lib/deckApi";
 
+import { SectionCards } from "../default/_components/section-cards";
+
 const cards = [
-  { title: "Total Decks", value: "—", change: "", badgeColor: "text-green-600 bg-green-100" },
-  { title: "Active Decks", value: "—", change: "", badgeColor: "text-blue-600 bg-blue-100" },
-  { title: "Inactive Decks", value: "—", change: "", badgeColor: "text-red-600 bg-red-100" },
-  { title: "Growth", value: "—", change: "", badgeColor: "text-green-600 bg-green-100" },
+  { title: "Total Decks", value: "—", change: "", badgeColor: "text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900" },
+  { title: "Active Decks", value: "—", change: "", badgeColor: "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900" },
+  { title: "Inactive Decks", value: "—", change: "", badgeColor: "text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900" },
+  { title: "Growth", value: "—", change: "", badgeColor: "text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900" },
 ];
 
 export default function DecksPage() {
@@ -77,36 +79,31 @@ export default function DecksPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6 p-6 @container/main">
       {/* Breadcrumbs */}
       <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/dashboard">Home</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Decks</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+  <BreadcrumbList>
+    <BreadcrumbItem>
+      <BreadcrumbLink asChild>
+        <Link href="/dashboard">Dashboard</Link>
+      </BreadcrumbLink>
+    </BreadcrumbItem>
+    <BreadcrumbSeparator />
+    <BreadcrumbItem>
+      <BreadcrumbLink asChild>
+        <Link href="/dashboard/Categories">Content Management</Link>
+      </BreadcrumbLink>
+    </BreadcrumbItem>
+    <BreadcrumbSeparator />
+    <BreadcrumbItem>
+      <BreadcrumbPage>Decks</BreadcrumbPage>
+    </BreadcrumbItem>
+  </BreadcrumbList>
+</Breadcrumb>
+
 
       {/* Top Cards (optionally update values based on decks.length, etc.) */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => (
-          <Card key={card.title} className="border bg-white shadow-sm">
-            <CardHeader className="pb-2">
-              <div className="flex w-full flex-row items-center justify-between">
-                <CardTitle className="text-base font-normal">{card.title}</CardTitle>
-                <span className={"rounded-md px-2 py-0.5 text-xs font-medium " + card.badgeColor}>{card.change}</span>
-              </div>
-              <CardDescription className="pt-2 pb-1 text-3xl font-bold text-black">{card.value}</CardDescription>
-            </CardHeader>
-          </Card>
-        ))}
-      </div>
+      <SectionCards />
 
       {/* Chart + Form */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
@@ -131,7 +128,7 @@ export default function DecksPage() {
       </div>
 
       {/* Deck Table */}
-      <Card className="border bg-white shadow-sm">
+      <Card className="border bg-background shadow-sm">
         <CardHeader>
           <CardTitle>Decks</CardTitle>
           <CardDescription>Manage all decks on your platform</CardDescription>

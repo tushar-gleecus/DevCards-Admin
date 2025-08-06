@@ -79,6 +79,7 @@ export const sidebarItems: NavGroup[] = [
         subItems: [
           { title: "Decks", url: "/dashboard/Decks", icon: CreditCard },
           { title: "Categories", url: "/dashboard/Categories", icon: CreditCard },
+          { title: "Cards", url: "/dashboard/Card-Contents", icon: CreditCard },
         ],
       },
     ],

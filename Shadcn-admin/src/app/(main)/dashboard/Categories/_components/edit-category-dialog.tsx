@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-type Deck = { id: string; name: string };
-type Category = { id: string; name: string; description: string; deckId: string };
+
+import { Category, Deck } from "@/lib/categoryApi";
 
 export function EditCategoryDialog({
   open,
@@ -25,7 +25,11 @@ export function EditCategoryDialog({
   const [form, setForm] = useState<Omit<Category, "id">>({
     name: "",
     description: "",
-    deckId: "",
+    deck: 0,
+    status: "",
+    created_at: "",
+    updated_at: "",
+    deck_name: "",
   });
 
   useEffect(() => {
@@ -33,7 +37,11 @@ export function EditCategoryDialog({
       setForm({
         name: category.name,
         description: category.description,
-        deckId: category.deckId,
+        deck: category.deck,
+        status: category.status,
+        created_at: category.created_at,
+        updated_at: category.updated_at,
+        deck_name: category.deck_name,
       });
     }
   }, [category, open]);
@@ -50,7 +58,7 @@ export function EditCategoryDialog({
           className="mt-2 flex flex-col gap-4"
           onSubmit={(e) => {
             e.preventDefault();
-            if (!form.name || !form.description || !form.deckId) return;
+            if (!form.name || !form.description || !form.deck) return;
             onSave(form);
           }}
         >
@@ -71,13 +79,13 @@ export function EditCategoryDialog({
             required
           />
           <Label htmlFor="edit-category-deck">Deck Name</Label>
-          <Select value={form.deckId} onValueChange={(value) => setForm({ ...form, deckId: value })} required>
+          <Select value={String(form.deck)} onValueChange={(value) => setForm({ ...form, deck: Number(value) })} required>
             <SelectTrigger id="edit-category-deck">
               <SelectValue placeholder="Select Deck" />
             </SelectTrigger>
             <SelectContent>
               {decks.map((deck) => (
-                <SelectItem key={deck.id} value={deck.id}>
+                <SelectItem key={deck.id} value={String(deck.id)}>
                   {deck.name}
                 </SelectItem>
               ))}

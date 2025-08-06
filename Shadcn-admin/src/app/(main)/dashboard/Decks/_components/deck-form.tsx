@@ -1,56 +1,51 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import type { Deck } from "@/lib/deckApi";
+import { Loader2 } from "lucide-react";
 
-export function DeckForm({ onAddDeck }: { onAddDeck: (data: { name: string; description: string }) => void }) {
+export function DeckForm({ deck, onAddDeck }: { deck?: Deck, onAddDeck: (data: { name: string; description: string }) => void }) {
   const [form, setForm] = useState({ name: "", description: "" });
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (deck) {
+      setForm({ name: deck.name, description: deck.description });
+    }
+  }, [deck]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim() || !form.description.trim()) return;
-    onAddDeck(form);
-    setForm({ name: "", description: "" });
+
+    setIsLoading(true);
+    try {
+      await onAddDeck(form);
+      setForm({ name: "", description: "" });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-      <div>
-        <Label htmlFor="deck-name" className="mb-2 block">
-          Name
-        </Label>
-        <Input
-          id="deck-name"
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-          placeholder="Enter deck name"
-          required
-          className="border border-zinc-400 focus:border-zinc-600"
-        />
+      <div className="flex flex-col gap-3">
+        <Label htmlFor="name">Name<span className="text-red-500">*</span></Label>
+        <Input id="name" name="name" value={form.name} onChange={handleChange} disabled={isLoading} />
       </div>
-      <div>
-        <Label htmlFor="description">Description</Label>
-<div className="mt-2">
-  <textarea
-    id="description"
-    name="description"
-    placeholder="Enter detailed deck description"
-    value={form.description}
-    onChange={handleChange}
-    className="min-h-[100px] w-full rounded-md border border-zinc-400 p-2 text-sm focus:border-zinc-600 focus:outline-none"
-  ></textarea>
-</div>
-
+      <div className="flex flex-col gap-3">
+        <Label htmlFor="description">Description<span className="text-red-500">*</span></Label>
+        <Textarea id="description" name="description" value={form.description} onChange={handleChange} className="min-h-[96px]" disabled={isLoading} />
       </div>
-      <Button type="submit" className="w-full">
-        Create Deck
+      <Button type="submit" className="w-full" disabled={isLoading}>
+        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (deck ? "Save Changes" : "Create Deck")}
       </Button>
     </form>
   );
