@@ -9,9 +9,14 @@ import securityPlugin from "eslint-plugin-security";
 import prettier from "eslint-plugin-prettier";
 import unicorn from "eslint-plugin-unicorn";
 import sonarjs from "eslint-plugin-sonarjs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const compat = new FlatCompat({
-  baseDirectory: import.meta.dirname,
+  baseDirectory: __dirname,
 });
 
 /** @type {import('eslint').Linter.Config[]} */
@@ -22,9 +27,6 @@ export default [
     languageOptions: {
       globals: globals.browser,
       parser: "@typescript-eslint/parser",
-      parserOptions: {
-        project: "./tsconfig.json",
-      },
     },
     settings: {
       react: {
@@ -40,11 +42,13 @@ export default [
       sonarjs: sonarjs,
     },
   },
-  pluginJs.configs.recommended,
-  pluginReact.configs.flat.recommended,
-  securityPlugin.configs.recommended,
+  ...compat.extends("next"),
+  ...compat.extends("plugin:security/recommended"),
+  ...compat.extends(pluginJs.configs.recommended),
+  ...compat.extends(pluginReact.configs.flat.recommended),
+  ...compat.extends(securityPlugin.configs.recommended),
   ...tseslint.configs.recommended,
-  ...next.configs["core-web-vitals"],
+  
 
   {
     rules: {

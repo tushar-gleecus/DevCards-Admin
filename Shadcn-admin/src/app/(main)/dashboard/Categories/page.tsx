@@ -1,23 +1,38 @@
-"use client";
-import { useEffect, useState } from "react";
-import { getDecks } from "@/lib/deckApi";
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { toast } from 'sonner';
 import {
   getCategories,
   createCategory,
   updateCategory,
   deleteCategory,
   Category as APICategory,
-} from "@/lib/categoryApi";
-import { toast } from "sonner";
-import { CategoryTable } from "./_components/category-table";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { CategoryForm } from "./_components/category-form";
-import { CategoriesChart } from "./_components/chart";
-import { Input } from "@/components/ui/input"; // Make sure this import exists!
+} from '@/lib/categoryApi';
+import { getDecks } from '@/lib/deckApi';
+import { CategoryTable } from './_components/category-table';
+import { CategoryForm } from './_components/category-form';
+import { CategoriesChart } from './_components/chart';
+import { Input } from '@/components/ui/input';
+import { SectionCards } from "../default/_components/section-cards";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from '@/components/ui/card';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
-// UI types for local props
-type UIDeck = { id: string; name: string };
-type UICategory = Omit<APICategory, "id" | "deck"> & { id: string; deckId: string; deck_name: string };
+import { UIDeck, UICategory } from "@/types/category-ui";
 
 function kpiCount(arr: UICategory[], fn: (cat: UICategory) => boolean) {
   return arr.filter(fn).length;
@@ -27,24 +42,36 @@ export default function CategoriesPage() {
   const [decks, setDecks] = useState<UIDeck[]>([]);
   const [categories, setCategories] = useState<UICategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState(""); // <-- added search state
+  const [search, setSearch] = useState('');
 
-  // Fetch decks and categories
   useEffect(() => {
     async function fetchData() {
       try {
-        const [decksData, categoriesData] = await Promise.all([getDecks(), getCategories()]);
-        setDecks(decksData.map((deck) => ({ id: deck.id.toString(), name: deck.name })));
+        const [decksData, categoriesData] = await Promise.all([
+          getDecks(),
+          getCategories(),
+        ]);
+        setDecks(
+          decksData.map((deck) => ({ id: deck.id, name: deck.name }))
+        );
         setCategories(
           categoriesData.map((cat) => ({
-            ...cat,
             id: cat.id.toString(),
+            name: cat.name,
+            description: cat.description,
+            status: cat.status,
+            created_at: cat.created_at,
+            updated_at: cat.updated_at,
+            deck: cat.deck,
             deckId: cat.deck.toString(),
-            deck_name: decksData.find((d) => d.id === cat.deck)?.name || "Unknown Deck",
-          })),
+            deck_name:
+              decksData.find((d) => d.id === cat.deck)?.name || 'Unknown Deck',
+            created_by: cat.created_by,
+            updated_by: cat.updated_by,
+          }))
         );
       } catch {
-        toast.error("Failed to load decks or categories");
+        toast.error('Failed to load decks or categories');
       } finally {
         setLoading(false);
       }
@@ -52,8 +79,11 @@ export default function CategoriesPage() {
     fetchData();
   }, []);
 
-  // Create Category
-  const handleCreateCategory = async (data: { name: string; description: string; deckId: string }) => {
+  const handleCreateCategory = async (data: {
+    name: string;
+    description: string;
+    deckId: number;
+  }) => {
     try {
       const newCat = await createCategory({
         name: data.name,
@@ -65,102 +95,145 @@ export default function CategoriesPage() {
           ...newCat,
           id: newCat.id.toString(),
           deckId: newCat.deck.toString(),
-          deck_name: decks.find((d) => d.id === newCat.deck.toString())?.name || "Unknown Deck",
+          deck_name:
+            decks.find((d) => d.id === newCat.deck)?.name ||
+            'Unknown Deck',
+          status: newCat.status, // Changed to directly use newCat.status
         },
         ...prev,
       ]);
-      toast.success("Category created!");
+      toast.success('Category created!');
     } catch {
-      toast.error("Failed to create category");
+      toast.error('Failed to create category');
     }
   };
 
-  // Edit Category
-  const handleEditCategory = async (id: string, data: { name: string; description: string; deckId: string }) => {
+  const handleEditCategory = async (
+    id: number,
+    data: { name: string; description: string; deckId: number; status: string }
+  ) => {
+    console.log("handleEditCategory - Received ID:", id, "Data:", data);
     try {
-      const updatedCat = await updateCategory(Number(id), {
+      const updatedCat = await updateCategory(id, {
         name: data.name,
         description: data.description,
-        deck: Number(data.deckId),
+        deck: data.deckId,
+        status: data.status,
       });
-      setCategories((prev) =>
-        prev.map((cat) =>
-          cat.id === id
-            ? {
-                ...updatedCat,
-                id: updatedCat.id.toString(),
-                deckId: updatedCat.deck.toString(),
-                deck_name: decks.find((d) => d.id === updatedCat.deck.toString())?.name || "Unknown Deck",
-              }
-            : cat,
-        ),
-      );
-      toast.success("Category updated!");
-    } catch {
-      toast.error("Failed to update category");
+      console.log("handleEditCategory - API Response (updatedCat):", updatedCat);
+      setCategories((prev) => {
+        const newCategories = prev.map((cat) => {
+          console.log("Mapping - Current cat.id:", cat.id, "Comparing to id.toString():", id.toString(), "Match:", cat.id === id.toString());
+          if (cat.id === id.toString()) {
+            console.log("Mapping - Before update - cat.status:", cat.status);
+            const updatedCategory = {
+              ...cat,
+              name: updatedCat.name,
+              description: updatedCat.description,
+              deck: updatedCat.deck,
+              status: updatedCat.status, 
+              deck_name:
+                decks.find((d) => d.id === updatedCat.deck)?.name ||
+                'Unknown Deck',
+            };
+            console.log("Mapping - After update - updatedCategory.status:", updatedCategory.status);
+            return updatedCategory;
+          }
+          return cat;
+        });
+        console.log("handleEditCategory - New categories state:", newCategories);
+        return newCategories;
+      });
+      toast.success('Category updated!');
+    } catch (error) {
+      console.error("handleEditCategory - Error updating category:", error);
+      toast.error('Failed to update category');
     }
   };
 
-  // Delete Category
-  const handleDeleteCategory = async (id: string) => {
+  const handleDeleteCategory = async (id: number) => {
     try {
       await deleteCategory(Number(id));
-      setCategories((prev) => prev.filter((cat) => cat.id !== id));
-      toast.success("Category deleted!");
+      setCategories((prev) => prev.filter((cat) => cat.id !== id.toString()));
+      toast.success('Category deleted!');
     } catch {
-      toast.error("Failed to delete category");
+      toast.error('Failed to delete category');
     }
   };
 
-  // KPI cards content
   const kpis = [
-    { title: "Total Categories", value: categories.length, trend: "" },
-    { title: "Active Categories", value: kpiCount(categories, (c) => c.status), trend: "" },
-    { title: "Inactive Categories", value: kpiCount(categories, (c) => !c.status), trend: "" },
-    { title: "Growth", value: "12%", trend: "+2%" }, // Dummy value
+    { title: 'Total Categories', value: categories.length, trend: '' },
+    {
+      title: 'Active Categories',
+      value: kpiCount(categories, (c) => c.status === "Active"),
+      trend: '',
+    },
+    {
+      title: 'Inactive Categories',
+      value: kpiCount(categories, (c) => c.status === "Inactive"),
+      trend: '',
+    },
+    { title: 'Growth', value: '12%', trend: '+2%' },
   ];
 
-  // Search Handler
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
   };
 
-  // Filtered Categories for Table
-  const filteredCategories = categories.filter((cat) => cat.name.toLowerCase().includes(search.toLowerCase()));
+  const filteredCategories = categories.filter((cat) =>
+    cat.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6 p-6 @container/main">
+      {/* Breadcrumbs */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/dashboard">Dashboard</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/dashboard/Categories">Content Management</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Categories</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       {/* KPI Cards */}
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {kpis.map((kpi) => (
-          <Card key={kpi.title} className="rounded-xl border shadow-sm">
-            <CardHeader>
-              <CardDescription>{kpi.title}</CardDescription>
-              <CardTitle className="mt-2 text-3xl font-semibold">
-                {kpi.value}
-                <span className="ml-2 text-xs font-medium text-green-600">{kpi.trend}</span>
-              </CardTitle>
-            </CardHeader>
-          </Card>
-        ))}
-      </div>
-      {/* Chart + Add Category card */}
+      <SectionCards />
+
+      {/* Chart + Create Form */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {/* Chart card (matches Decks) */}
-        <Card className="flex min-h-[240px] flex-col justify-center rounded-xl border border-zinc-200 px-6 shadow-sm">
-          <CardHeader className="pb-0">
-            <CardTitle className="mb-1 text-lg font-medium">Categories Overview</CardTitle>
-            <CardDescription className="mb-2">Category creation trend</CardDescription>
+        <Card>
+          <CardHeader>
+            <CardTitle>Categories Overview</CardTitle>
+            <CardDescription>Category creation trend</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-1 flex-col justify-end">
+          <CardContent>
             <CategoriesChart />
           </CardContent>
         </Card>
-        {/* Create Category Form card */}
-        <CategoryForm decks={decks} onCreate={handleCreateCategory} />
+        <Card>
+          <CardHeader>
+            <CardTitle>Create Category</CardTitle>
+            <CardDescription>Add a new category below</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CategoryForm decks={decks} onCreate={handleCreateCategory} />
+          </CardContent>
+        </Card>
       </div>
-      {/* Table Card */}
-      <Card className="mt-2 rounded-xl border-2 border-zinc-300 shadow">
+
+      {/* Table */}
+      <Card className="mt-2 rounded-xl border bg-background shadow-sm">
         <CardHeader className="pb-2">
           <CardTitle className="text-xl font-semibold">Categories</CardTitle>
           <CardDescription className="text-muted-foreground mt-1 mb-2 text-sm">
@@ -168,7 +241,6 @@ export default function CategoriesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Search box (now with tight spacing) */}
           <div className="mb-2 flex items-center">
             <Input
               type="text"

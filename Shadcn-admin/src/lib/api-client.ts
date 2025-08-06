@@ -20,7 +20,7 @@ apiClient.interceptors.request.use(
       const isPublicRoute = publicPaths.some((path) => config.url?.includes(path));
 
       if (token && !isPublicRoute) {
-        config.headers.Authorization = `Token ${token}`; // Change to `Bearer` if needed
+        config.headers.Authorization = `Bearer ${token}`; // Changed from `Token` to `Bearer`
       }
     }
     return config;

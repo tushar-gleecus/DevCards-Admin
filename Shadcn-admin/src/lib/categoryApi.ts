@@ -5,7 +5,7 @@ export interface Category {
   id: number;
   name: string;
   description: string;
-  status: boolean;
+  status: string;
   created_at: string;
   updated_at: string;
   deck: number; // deck id (foreign key)
@@ -38,7 +38,7 @@ export const createCategory = async (payload: {
 // Update category
 export const updateCategory = async (
   id: number,
-  payload: { name: string; description: string; deck: number },
+  payload: { name: string; description: string; deck: number; status: string },
 ): Promise<Category> => {
   const res = await apiClient.put<Category>(`/api/categories/${id}/`, payload);
   return res.data;

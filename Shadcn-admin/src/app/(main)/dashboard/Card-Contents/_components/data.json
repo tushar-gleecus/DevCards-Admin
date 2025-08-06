@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "name": "Welcome to DevHub",
+    "short_desc": "Intro content for users",
+    "category_name": "Onboarding",
+    "rich_text": "<p>This is <strong>rich text</strong> content.</p>",
+    "status": "Draft",
+    "created_at": "2025-08-01T13:00:00Z"
+  }
+]

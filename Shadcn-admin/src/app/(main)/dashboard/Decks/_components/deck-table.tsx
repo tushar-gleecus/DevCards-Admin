@@ -1,6 +1,16 @@
-"use client";
+'use client';
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ActionButton } from "@/components/ui/ActionButton";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -17,6 +27,7 @@ import {
   Eye,
   EyeOff,
   Download,
+  Loader2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -26,8 +37,16 @@ import {
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { EditDeckDialog } from "./edit-deck-dialog";
+import { EditDeckDrawer } from "./edit-deck-drawer";
 import type { Deck } from "@/lib/deckApi";
+
+function truncateDescription(description: string, wordLimit: number) {
+  const words = description.split(' ');
+  if (words.length > wordLimit) {
+    return words.slice(0, wordLimit).join(' ') + '...';
+  }
+  return description;
+}
 
 function exportCSV(data: any[], columns: { key: string; label: string }[], filename: string) {
   const csvRows = [
@@ -39,9 +58,9 @@ function exportCSV(data: any[], columns: { key: string; label: string }[], filen
   const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
+a.href = url;
+a.download = filename;
+a.click();
   window.URL.revokeObjectURL(url);
 }
 
@@ -62,7 +81,7 @@ export function DecksDataTable({
   loading,
 }: {
   decks: Deck[];
-  onEditDeck: (id: number, data: Deck) => void;
+  onEditDeck: (id: number, data: { name: string; description: string }) => void;
   onDeleteDeck: (id: number) => void;
   loading?: boolean;
 }) {
@@ -70,7 +89,7 @@ export function DecksDataTable({
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [search, setSearch] = useState("");
   const [editDeck, setEditDeck] = useState<Deck | null>(null);
-  const [editOpen, setEditOpen] = useState(false);
+  const [deckToDelete, setDeckToDelete] = useState<number | null>(null); // New state for deck to delete
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [visibleCols, setVisibleCols] = useState<Record<SortKey, boolean>>({
@@ -81,6 +100,19 @@ export function DecksDataTable({
   });
   const [filterOpen, setFilterOpen] = useState<Partial<Record<SortKey, boolean>>>({});
   const [filters, setFilters] = useState<Partial<Record<SortKey, string>>>({});
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteConfirm = async () => {
+    if (deckToDelete) {
+      setIsDeleting(true);
+      try {
+        await onDeleteDeck(deckToDelete);
+        setDeckToDelete(null);
+      } finally {
+        setIsDeleting(false);
+      }
+    }
+  };
 
   function applyFilters(list: Deck[]): Deck[] {
     return list.filter((deck) => {
@@ -140,10 +172,10 @@ export function DecksDataTable({
         <div className="flex gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="outline" className="flex gap-1">
+              <ActionButton size="sm" variant="outline" className="flex gap-1" onClick={() => {}}>
                 <Eye className="h-4 w-4" />
                 <span>Columns</span>
-              </Button>
+              </ActionButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {COLUMN_CONFIG.map((col) => (
@@ -162,7 +194,7 @@ export function DecksDataTable({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button
+          <ActionButton
             size="sm"
             variant="outline"
             className="flex gap-1"
@@ -175,14 +207,14 @@ export function DecksDataTable({
           >
             <Download className="h-4 w-4" />
             Export
-          </Button>
+          </ActionButton>
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
-        <Table>
+      <div className="overflow-x-auto rounded-lg border border-border">
+        <Table className="bg-background">
 <TableHeader className="bg-muted">
-  <TableRow>
+  <TableRow className="border-border">
     {COLUMN_CONFIG.filter((col) => visibleCols[col.key as SortKey]).map((col) => (
       <TableHead
         key={col.key}
@@ -197,9 +229,9 @@ export function DecksDataTable({
             onOpenChange={(open) => setFilterOpen((fo) => ({ ...fo, [col.key]: open }))}
           >
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-6 w-6 p-1">
+              <ActionButton variant="ghost" size="icon" className="h-6 w-6 p-1" onClick={() => {}}>
                 <Funnel className="h-4 w-4 text-muted-foreground" />
-              </Button>
+              </ActionButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48 p-2">
               <div className="text-xs text-muted-foreground mb-1">
@@ -213,14 +245,14 @@ export function DecksDataTable({
                   setFilters((f) => ({ ...f, [col.key]: e.target.value }))
                 }
               />
-              <Button
+              <ActionButton
                 variant="ghost"
                 size="sm"
                 className="mt-2 w-full"
                 onClick={() => setFilters((f) => ({ ...f, [col.key]: "" }))}
               >
                 Clear Filter
-              </Button>
+              </ActionButton>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -238,18 +270,18 @@ export function DecksDataTable({
 </TableHeader>
           <TableBody>
             {pageDecks.map((deck: Deck) => (
-              <TableRow key={deck.id} className="hover:bg-muted/40 border-b transition">
-                {visibleCols.name && <TableCell>{deck.name}</TableCell>}
-                {visibleCols.description && <TableCell>{deck.description}</TableCell>}
+              <TableRow key={deck.id} className="hover:bg-muted/40 border-b border-border transition">
+                {visibleCols.name && <TableCell className="text-foreground">{deck.name}</TableCell>}
+                {visibleCols.description && <TableCell className="text-foreground">{truncateDescription(deck.description, 5)}</TableCell>}
                 {visibleCols.status && (
                   <TableCell>
                     <span
                       className={`inline-block rounded px-2 py-1 text-xs font-medium ${
                         String(deck.status) === "Active"
-                          ? "bg-green-100 text-green-800"
+                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-400"
                           : String(deck.status) === "Inactive"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-gray-100 text-gray-700"
+                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-400"
+                          : "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-400"
                       }`}
                     >
                       {String(deck.status)}
@@ -262,20 +294,25 @@ export function DecksDataTable({
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
+                      <ActionButton variant="ghost" size="icon" onClick={() => {}}>
                         <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      </ActionButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
                         onClick={() => {
                           setEditDeck(deck);
-                          setEditOpen(true);
                         }}
                       >
-                        View/Edit
+                        Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onDeleteDeck(deck.id)} className="text-red-600">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          console.log("Attempting to delete deck with ID:", deck.id);
+                          setDeckToDelete(deck.id);
+                        }} // Open confirmation modal
+                        className="text-red-600"
+                      >
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -314,26 +351,55 @@ export function DecksDataTable({
               </option>
             ))}
           </select>
-          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+          <ActionButton variant="outline" size="sm" disabled={page === 1} onClick={async () => { setPage((p) => Math.max(1, p - 1)); await new Promise(res => setTimeout(res, 400)); }}>
             Previous
-          </Button>
-          <Button
+          </ActionButton>
+          <ActionButton
             variant="outline"
             size="sm"
             disabled={page === totalPages || totalPages === 0}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            onClick={async () => { setPage((p) => Math.min(totalPages, p + 1)); await new Promise(res => setTimeout(res, 400)); }}
           >
             Next
-          </Button>
+          </ActionButton>
         </div>
       </div>
 
-      <EditDeckDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        deck={editDeck}
-        onSave={onEditDeck}
-      />
+      <div>
+        <EditDeckDrawer
+          deck={editDeck}
+          onClose={() => setEditDeck(null)}
+          onSave={onEditDeck}
+        />
+        <EditDeckDrawer
+          deck={editDeck}
+          onClose={() => setEditDeck(null)}
+          onSave={onEditDeck}
+        />
+      </div>
+
+      {/* Confirmation Modal for Delete */}
+      <AlertDialog open={!!deckToDelete} onOpenChange={(open) => {
+        console.log("AlertDialog onOpenChange. Open state:", open);
+        !open && setDeckToDelete(null);
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your
+              deck.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeckToDelete(null)} disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} disabled={isDeleting}>
+              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

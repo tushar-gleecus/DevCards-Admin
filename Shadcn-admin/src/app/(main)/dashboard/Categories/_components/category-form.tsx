@@ -1,78 +1,72 @@
 "use client";
-import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import type { Category, Deck } from "@/lib/categoryApi";
 
-type Deck = { id: string; name: string };
 
-export function CategoryForm({
-  decks,
-  onCreate,
-}: {
-  decks: Deck[];
-  onCreate: (cat: { name: string; description: string; deckId: string }) => void;
-}) {
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-    deckId: decks.length > 0 ? decks[0].id : "",
-  });
+
+export function CategoryForm({ category, decks, onCreate, onSave }: { category?: Category, decks: Deck[], onCreate?: (cat: { name: string; description: string; deckId: number }) => void, onSave?: (cat: { name: string; description: string; deckId: number }) => void }) {
+  const [form, setForm] = useState({ name: "", description: "", deckId: 0 });
+
+  useEffect(() => {
+    if (category) {
+      setForm({ name: category.name, description: category.description, deckId: category.deck });
+    } else if (decks.length > 0) {
+      setForm({ name: "", description: "", deckId: Number(decks[0].id) });
+    }
+  }, [category, decks]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSelectChange = (value: string) => {
+    setForm({ ...form, deckId: Number(value) });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.description.trim() || !form.deckId) return;
+    if (category && onSave) {
+      onSave(form);
+    } else if (onCreate) {
+      onCreate(form);
+    }
+    setForm({ name: "", description: "", deckId: decks.length > 0 ? Number(decks[0].id) : 0 });
+  };
 
   return (
-    <Card className="rounded-xl border border-zinc-200 shadow-sm">
-      <CardHeader>
-        <CardTitle>Create Category</CardTitle>
-        <CardDescription>Add a new category below</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form
-          className="flex flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!form.name || !form.description || !form.deckId) return;
-            onCreate(form);
-            setForm({ name: "", description: "", deckId: decks.length > 0 ? decks[0].id : "" });
-          }}
-        >
-            <Label htmlFor="category-name">Name</Label>
-            <Input
-            id="category-name"
-            placeholder="Enter category name"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            required
-            className="border border-zinc-300"
-            />
-            <Label htmlFor="category-description">Description</Label>
-            <textarea
-              id="category-description"
-              placeholder="Enter category description"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              required
-              className="border border-zinc-300 rounded-md p-2 min-h-[80px] resize-y"
-            />
-            <Label htmlFor="deck-dropdown">Deck Name</Label>
-            <Select value={form.deckId} onValueChange={(value) => setForm({ ...form, deckId: value })} required>
-            <SelectTrigger id="deck-dropdown" className="border border-zinc-300">
-              <SelectValue placeholder="Select Deck" />
-            </SelectTrigger>
-            <SelectContent>
-              {decks.map((deck) => (
-              <SelectItem key={deck.id} value={deck.id}>
+    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+      <div className="flex flex-col gap-3">
+        <Label htmlFor="name">Name<span className="text-red-500">*</span></Label>
+        <Input id="name" name="name" value={form.name} onChange={handleChange} />
+      </div>
+      <div className="flex flex-col gap-3">
+        <Label htmlFor="description">Description<span className="text-red-500">*</span></Label>
+        <Textarea id="description" name="description" value={form.description} onChange={handleChange} className="min-h-[96px]" />
+      </div>
+      <div className="flex flex-col gap-3">
+        <Label htmlFor="deckId">Deck<span className="text-red-500">*</span></Label>
+        <Select name="deckId" value={form.deckId.toString()} onValueChange={handleSelectChange}>
+          <SelectTrigger id="deckId" className="w-full">
+            <SelectValue placeholder="Select a deck" />
+          </SelectTrigger>
+          <SelectContent>
+            {decks.map((deck) => (
+              <SelectItem key={deck.id} value={deck.id.toString()}>
                 {deck.name}
               </SelectItem>
-              ))}
-            </SelectContent>
-            </Select>
-          <Button type="submit" className="mt-2 w-full">
-            Create Category
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <Button type="submit" className="w-full">
+        {category ? "Save Changes" : "Create Category"}
+      </Button>
+    </form>
   );
 }
