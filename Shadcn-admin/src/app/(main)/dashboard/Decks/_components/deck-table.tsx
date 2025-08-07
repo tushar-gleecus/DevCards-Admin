@@ -81,7 +81,7 @@ export function DecksDataTable({
   loading,
 }: {
   decks: Deck[];
-  onEditDeck: (id: number, data: { name: string; description: string }) => void;
+  onEditDeck: (id: number, data: { name: string; description: string; status: boolean }) => void;
   onDeleteDeck: (id: number) => void;
   loading?: boolean;
 }) {

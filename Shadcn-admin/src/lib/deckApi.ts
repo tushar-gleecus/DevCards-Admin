@@ -25,7 +25,7 @@ export const createDeck = async (payload: { name: string; description: string })
 };
 
 // Update an existing deck
-export const updateDeck = async (id: number, payload: { name: string; description: string }): Promise<Deck> => {
+export const updateDeck = async (id: number, payload: { name: string; description: string; status: boolean }): Promise<Deck> => {
   const res = await apiClient.put<Deck>(`/api/decks/${id}/`, payload);
   return res.data;
 };

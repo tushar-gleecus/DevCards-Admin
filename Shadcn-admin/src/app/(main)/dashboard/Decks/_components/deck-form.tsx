@@ -6,10 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Deck } from "@/lib/deckApi";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export function DeckForm({ deck, onAddDeck }: { deck?: Deck, onAddDeck: (data: { name: string; description: string }) => void }) {
   const [form, setForm] = useState({ name: "", description: "" });
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({ name: "", description: "" });
 
   useEffect(() => {
     if (deck) {
@@ -17,13 +19,34 @@ export function DeckForm({ deck, onAddDeck }: { deck?: Deck, onAddDeck: (data: {
     }
   }, [deck]);
 
+  const validateField = (name: string, value: string) => {
+    const nameRegex = /^[a-zA-Z\s]*$/;
+    let errorMessage = "";
+
+    if (!value.trim()) {
+      errorMessage = `${name === "name" ? "Deck name" : "Description"} is required.`;
+    } else if (!nameRegex.test(value)) {
+      errorMessage = `${name === "name" ? "Deck name" : "Description"} can only contain letters and spaces.`;
+    }
+    setErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
+    return errorMessage === "";
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    validateField(name, value);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.description.trim()) return;
+
+    const isNameValid = validateField("name", form.name);
+    const isDescriptionValid = validateField("description", form.description);
+
+    if (!isNameValid || !isDescriptionValid) {
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -38,11 +61,28 @@ export function DeckForm({ deck, onAddDeck }: { deck?: Deck, onAddDeck: (data: {
     <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
       <div className="flex flex-col gap-3">
         <Label htmlFor="name">Name<span className="text-red-500">*</span></Label>
-        <Input id="name" name="name" value={form.name} onChange={handleChange} disabled={isLoading} />
+        <Input
+          id="name"
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          disabled={isLoading}
+          isInvalid={!!errors.name}
+        />
+        {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
       </div>
       <div className="flex flex-col gap-3">
         <Label htmlFor="description">Description<span className="text-red-500">*</span></Label>
-        <Textarea id="description" name="description" value={form.description} onChange={handleChange} className="min-h-[96px]" disabled={isLoading} />
+        <Textarea
+          id="description"
+          name="description"
+          value={form.description}
+          onChange={handleChange}
+          className="min-h-[96px]"
+          disabled={isLoading}
+          isInvalid={!!errors.description}
+        />
+        {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
       </div>
       <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {deck ? "Saving Changes..." : "Creating Deck..."}</> : (deck ? "Save Changes" : "Create Deck")}
