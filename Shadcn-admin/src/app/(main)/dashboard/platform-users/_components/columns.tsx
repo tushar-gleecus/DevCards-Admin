@@ -37,6 +37,9 @@ export const platformUserColumns = (handleDelete: (user: PlatformUser) => void):
     cell: ({ row }) => <div>{row.getValue("first_name")}</div>,
     enableSorting: true,
     enableColumnFilter: true,
+    meta: {
+      label: "First Name"
+    }
   },
   {
     accessorKey: "last_name",
@@ -53,6 +56,9 @@ export const platformUserColumns = (handleDelete: (user: PlatformUser) => void):
     cell: ({ row }) => <div>{row.getValue("last_name")}</div>,
     enableSorting: true,
     enableColumnFilter: true,
+    meta: {
+      label: "Last Name"
+    }
   },
   {
     accessorKey: "email",
@@ -69,6 +75,9 @@ export const platformUserColumns = (handleDelete: (user: PlatformUser) => void):
     cell: ({ row }) => <div>{row.getValue("email")}</div>,
     enableSorting: true,
     enableColumnFilter: true,
+    meta: {
+      label: "Email"
+    }
   },
   {
     accessorKey: "status",
@@ -94,6 +103,9 @@ export const platformUserColumns = (handleDelete: (user: PlatformUser) => void):
     },
     enableSorting: true,
     enableColumnFilter: true,
+    meta: {
+      label: "Status"
+    }
   },
   {
     id: "actions",
@@ -101,18 +113,9 @@ export const platformUserColumns = (handleDelete: (user: PlatformUser) => void):
     cell: ({ row }) => {
       const user = row.original;
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <Trash2 className="text-destructive h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleDelete(user)} className="text-red-600">
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => handleDelete(user)}>
+          <Trash2 className="text-destructive h-4 w-4" />
+        </Button>
       );
     },
   },

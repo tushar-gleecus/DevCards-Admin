@@ -1,12 +1,12 @@
 //admin-user
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import AdminForm from "./_components/AdminForm";
 import { DataTable } from "./_components/data-table";
 import { adminColumns } from "./_components/columns";
 import { Admin } from "@/types/admin";
-import { EditAdminDialog } from "./_components/edit-admin-dialog";
+import { EditAdminDrawer } from "./_components/edit-admin-drawer";
 import { DeleteAdminDialog } from "./_components/delete-admin-dialog";
 import { DataTablePagination } from "./_components/data-table-pagination";
 
@@ -48,7 +48,7 @@ export default function AdminUsersPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   // --- API Handlers ---
-  async function handleAddAdmin(adminData: Omit<Admin, "id">) {
+  const handleAddAdmin = useCallback(async (adminData: Omit<Admin, "id">) => {
     try {
       const res = await apiClient.post("/api/admins/", adminData);
       setAdmins((prev) => [...prev, res.data]);
@@ -56,14 +56,24 @@ export default function AdminUsersPage() {
     } catch (err: any) {
       toast.error(err.response?.data?.detail || "Error adding admin.");
     }
-  }
+  }, []);
 
-  function handleEdit(admin: Admin) {
+  const handleEdit = useCallback((admin: Admin) => {
     setSelectedAdmin(admin);
     setEditOpen(true);
-  }
+  }, []);
 
-  async function handleSaveEdit(updated: Admin) {
+  const handleRoleChange = useCallback(async (admin: Admin, newRole: "Admin" | "SuperAdmin") => {
+    try {
+      const updatedAdmin = { ...admin, role: newRole };
+      const res = await apiClient.put(`/api/admins/update/${admin.id}/`, updatedAdmin);
+      setAdmins((prev) => prev.map((a) => (a.id === res.data.id ? res.data : a)));
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || "Error updating role.");
+    }
+  }, []);
+
+  const handleSaveEdit = useCallback(async (updated: Admin) => {
     try {
       const res = await apiClient.put(`/api/admins/update/${updated.id}/`, updated);
       setAdmins((prev) => prev.map((a) => (a.id === res.data.id ? res.data : a)));
@@ -72,14 +82,14 @@ export default function AdminUsersPage() {
     } catch (err: any) {
       toast.error(err.response?.data?.detail || "Error updating admin.");
     }
-  }
+  }, []);
 
-  function handleDelete(admin: Admin) {
+  const handleDelete = useCallback((admin: Admin) => {
     setSelectedAdmin(admin);
     setDeleteOpen(true);
-  }
+  }, []);
 
-  async function handleConfirmDelete() {
+  const handleConfirmDelete = useCallback(async () => {
     if (!selectedAdmin) return;
     try {
       await apiClient.delete(`/api/admins/${selectedAdmin.id}/`);
@@ -89,10 +99,10 @@ export default function AdminUsersPage() {
     } catch (err: any) {
       toast.error(err.response?.data?.detail || "Error deleting admin.");
     }
-  }
+  }, [selectedAdmin]);
 
   // --- Column and Table Setup ---
-  const allCols = adminColumns(handleEdit, handleDelete);
+  const allCols = useMemo(() => adminColumns(handleEdit, handleDelete, handleRoleChange, "Admin"), [handleEdit, handleDelete, handleRoleChange]);
   const toggleableColumns = allCols.filter((col) => col.id !== "actions");
 
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
@@ -186,7 +196,7 @@ export default function AdminUsersPage() {
           <CardTitle>Add Admin User</CardTitle>
         </CardHeader>
         <CardContent>
-          <AdminForm onAddAdmin={handleAddAdmin} />
+          <AdminForm onAddAdmin={handleAddAdmin} currentUserRole="Admin" />
         </CardContent>
       </Card>
 
@@ -239,7 +249,7 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      <EditAdminDialog open={editOpen} onOpenChange={setEditOpen} data={selectedAdmin} onSubmit={handleSaveEdit} />
+      <EditAdminDrawer open={editOpen} onOpenChange={setEditOpen} data={selectedAdmin} onSubmit={handleSaveEdit} />
       <DeleteAdminDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={handleConfirmDelete} />
     </div>
   );

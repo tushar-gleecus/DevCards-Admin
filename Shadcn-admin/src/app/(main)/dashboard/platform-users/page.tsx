@@ -1,7 +1,7 @@
 //platform-user
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import {
@@ -18,6 +18,24 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "rec
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import apiClient from "@/lib/api-client";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
+import { Eye, Download } from "lucide-react";
+
+import { SectionCards } from "./_components/SectionCards";
+import { DataTablePagination } from "./_components/data-table-pagination";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  SortingState,
+} from "@tanstack/react-table";
 
 type PlatformUser = {
   id: string;
@@ -26,45 +44,6 @@ type PlatformUser = {
   email: string;
   status: "Pending" | "Done";
 };
-
-const cards = [
-  {
-    title: "Total Users",
-    value: "$1,250.00",
-    change: "+12.5%",
-    direction: "up",
-    subtitle: "Trending up this month",
-    desc: "Visitors for the last 6 months",
-    badgeColor: "text-green-600 bg-green-100",
-  },
-  {
-    title: "Active Users",
-    value: "1,000",
-    change: "-8.0%",
-    direction: "down",
-    subtitle: "Down 8% this period",
-    desc: "Acquisition needs attention",
-    badgeColor: "text-red-600 bg-red-100",
-  },
-  {
-    title: "Pending Users",
-    value: "234",
-    change: "+4.5%",
-    direction: "up",
-    subtitle: "Pending increased",
-    desc: "Check onboarding process",
-    badgeColor: "text-green-600 bg-green-100",
-  },
-  {
-    title: "Growth",
-    value: "4.5%",
-    change: "+2.1%",
-    direction: "up",
-    subtitle: "Steady performance increase",
-    desc: "Meets growth projections",
-    badgeColor: "text-green-600 bg-green-100",
-  },
-];
 
 const chartData = [
   { date: "Apr 6", users: 180, pending: 50 },
@@ -90,8 +69,19 @@ export default function PlatformUsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [userToDelete, setUserToDelete] = useState<PlatformUser | null>(null);
   const [deleting, setDeleting] = useState<boolean>(false);
+  const [sorting, setSorting] = useState<SortingState>([]);
 
-  // Fetch users from API
+  // Helper function to get column header as string
+  const getColumnHeaderString = useCallback((column: any) => {
+    if (typeof column.header === 'string') {
+      return column.header;
+    } else if (typeof column.header === 'function') {
+      // Attempt to render the header component to a string, or use a fallback
+      // This is a simplified approach; a more robust solution might involve ReactDOMServer.renderToStaticMarkup
+      return column.id; // Fallback to column ID if header is a function
+    }
+    return column.id;
+  }, []);
   const fetchUsers = async () => {
     setLoading(true);
     setError(null);
@@ -100,7 +90,8 @@ export default function PlatformUsersPage() {
       setUsers(res.data);
     } catch (err: any) {
       setError(err.message || "Unknown error");
-    } finally {
+    }
+    finally {
       setLoading(false);
     }
   };
@@ -109,12 +100,10 @@ export default function PlatformUsersPage() {
     fetchUsers();
   }, []);
 
-  // This is called by your columns "Delete" button to open the modal
   const handleDelete = (user: PlatformUser) => {
     setUserToDelete(user);
   };
 
-  // This deletes the user via API and closes the modal
   const confirmDelete = async () => {
     if (!userToDelete) return;
     setDeleting(true);
@@ -124,13 +113,68 @@ export default function PlatformUsersPage() {
       setUserToDelete(null);
     } catch (err) {
       alert("Error deleting user.");
-    } finally {
+    }
+    finally {
       setDeleting(false);
     }
   };
 
+  // --- Column and Table Setup ---
+  const allCols = useMemo(() => platformUserColumns(handleDelete), [handleDelete]);
+  
+
+  const toggleableColumns = allCols.filter((col) => col.id !== "actions");
+
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(
+    toggleableColumns.map((col) => col.id as string)
+  );
+
+  const visibleCols = allCols.filter(
+    (col) => visibleColumns.includes(col.id as string) || col.id === "actions"
+  );
+
+  const table = useReactTable({
+    data: users,
+    columns: visibleCols,
+    state: {
+      sorting,
+    },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
+  // --- Export to CSV ---
+  function exportToCSV(data: PlatformUser[], filename: string) {
+    if (!data.length) return;
+    const headers = toggleableColumns
+      .filter((c) => visibleColumns.includes(c.id as string))
+      .map((c) => getColumnHeaderString(c));
+
+    const rows = data.map((row) =>
+      toggleableColumns
+        .filter((c) => visibleColumns.includes(c.id as string))
+        .map((c) => {
+          const value = row.getValue(c.id);
+          return `"${String(value).replace(/"/g, '""')}"`;
+        })
+        .join(",")
+    );
+
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="@container/main flex flex-col gap-4 md:gap-6">
       {/* Breadcrumbs */}
       <Breadcrumb>
               <BreadcrumbList>
@@ -153,21 +197,7 @@ export default function PlatformUsersPage() {
             </Breadcrumb>
 
       {/* Top Cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => (
-          <Card key={card.title} className="border bg-white shadow-sm">
-            <CardHeader className="pb-2">
-              <div className="flex w-full flex-row items-center justify-between">
-                <CardTitle className="text-base font-normal">{card.title}</CardTitle>
-                <span className={"rounded-md px-2 py-0.5 text-xs font-medium " + card.badgeColor}>{card.change}</span>
-              </div>
-              <CardDescription className="pt-2 pb-1 text-3xl font-bold text-black">{card.value}</CardDescription>
-              <div className="text-muted-foreground text-xs font-medium">{card.subtitle}</div>
-              <div className="text-muted-foreground text-xs">{card.desc}</div>
-            </CardHeader>
-          </Card>
-        ))}
-      </div>
+      <SectionCards />
 
       {/* Chart */}
       <Card>
@@ -201,20 +231,56 @@ export default function PlatformUsersPage() {
 
       {/* Data Table Section */}
       <Card>
-        <CardHeader>
-          <CardTitle>Platform Users</CardTitle>
-          <CardDescription>Manage users registered on your platform.</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between gap-4">
+          <div>
+            <CardTitle>Platform Users</CardTitle>
+            <CardDescription>Manage users registered on your platform.</CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="flex gap-2">
+                  <Eye className="h-4 w-4" />
+                  View
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <div className="text-muted-foreground px-2 py-1 text-xs font-medium">Toggle columns</div>
+                {toggleableColumns.map((col, index) => (
+                  <DropdownMenuCheckboxItem
+                    key={`${String(col.id)}-${index}`}
+                    checked={visibleColumns.includes(col.id as string)}
+                    onCheckedChange={(checked) => {
+                      if (checked) setVisibleColumns([...visibleColumns, col.id as string]);
+                      else setVisibleColumns(visibleColumns.filter((id) => id !== col.id));
+                    }}
+                  >
+                    {getColumnHeaderString(col)}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex gap-2"
+              onClick={() => exportToCSV(table.getFilteredRowModel().rows.map((row) => row.original), "platform-users.csv")}
+            >
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent>
-          {/* Optional: Add User Form (if you created it) */}
-          {/* <AddUserForm onUserAdded={fetchUsers} /> */}
-
+        <CardContent className="space-y-4">
           {loading ? (
             <div className="py-8 text-center">Loading users...</div>
           ) : error ? (
             <div className="py-8 text-center text-red-600">{error}</div>
           ) : (
-            <DataTable columns={platformUserColumns(handleDelete)} data={users} />
+            <div className="space-y-2">
+              <DataTable table={table} />
+              <DataTablePagination table={table} />
+            </div>
           )}
         </CardContent>
       </Card>

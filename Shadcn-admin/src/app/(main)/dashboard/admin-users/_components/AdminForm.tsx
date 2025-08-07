@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { Admin } from "@/types/admin";
+import { toast } from "sonner";
 
 type AdminWithoutId = Omit<Admin, "id">;
 
 const nameRegex = /^[A-Za-z\s-]+$/;
 const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/;
 
-export default function AdminForm({ onAddAdmin }: { onAddAdmin: (admin: AdminWithoutId) => void }) {
+export default function AdminForm({ onAddAdmin, currentUserRole }: { onAddAdmin: (admin: AdminWithoutId) => void; currentUserRole: "Admin" | "SuperAdmin" }) {
   const [form, setForm] = useState<AdminWithoutId>({
     first_name: "",
     last_name: "",
@@ -83,15 +84,19 @@ export default function AdminForm({ onAddAdmin }: { onAddAdmin: (admin: AdminWit
     if (Object.keys(validationErrors).length > 0) return;
 
     setLoading(true);
-    setSuccess("");
     setTimeout(() => {
       onAddAdmin(form);
       setForm({ first_name: "", last_name: "", email: "", role: "Admin" });
       setTouched({});
       setLoading(false);
-      setSuccess("A welcome email has been sent and the admin user was added.");
-      setTimeout(() => setSuccess(""), 4000);
+      toast.success("A welcome email has been sent and the admin user was added.");
     }, 1800);
+  };
+
+  const handleRoleSelectClick = () => {
+    if (currentUserRole !== "SuperAdmin") {
+      toast.info("Only Super Admins have this privilege. Please contact support.");
+    }
   };
 
   return (
@@ -156,31 +161,45 @@ export default function AdminForm({ onAddAdmin }: { onAddAdmin: (admin: AdminWit
           <Label>
             Role <span className="text-red-500">*</span>
           </Label>
-          <Select
-            value={form.role}
-            onValueChange={(value) => handleChange("role", value as AdminWithoutId["role"])}
-            disabled={loading}
-          >
-            <SelectTrigger
-              className={`max-w-xs border border-zinc-400 focus:border-zinc-600 ${
+          {currentUserRole === "SuperAdmin" ? (
+            <Select
+              value={form.role}
+              onValueChange={(value) => {
+                handleChange("role", value as AdminWithoutId["role"]);
+              }}
+            >
+              <SelectTrigger
+                className={`max-w-xs border border-zinc-400 focus:border-zinc-600 ${
+                  touched.role && errors.role ? "border-red-500" : ""
+                }`}
+              >
+                <SelectValue />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="Admin">Admin</SelectItem>
+                <SelectItem value="SuperAdmin">SuperAdmin</SelectItem>
+              </SelectContent>
+            </Select>
+          ) : (
+            <div
+              className={`max-w-xs border border-zinc-400 focus:border-zinc-600 p-2 rounded-md cursor-pointer ${
                 touched.role && errors.role ? "border-red-500" : ""
               }`}
+              onClick={() => {
+                toast.info("Only Super Admins have this privilege. Please contact support.");
+              }}
             >
-              <SelectValue />
-            </SelectTrigger>
-
-            <SelectContent>
-              <SelectItem value="Admin">Admin</SelectItem>
-              <SelectItem value="SuperAdmin">SuperAdmin</SelectItem>
-            </SelectContent>
-          </Select>
+              {form.role}
+            </div>
+          )}
           <p className="text-muted-foreground text-xs">The selected role will determine the user's permissions.</p>
           {touched.role && errors.role && <p className="text-xs text-red-600">{errors.role}</p>}
         </div>
         {/* Submit */}
         <div className="md:col-span-2">
           <Button
-            disabled={loading || Object.keys(validate(form)).length > 0}
+            
             className="flex items-center"
             type="submit"
           >

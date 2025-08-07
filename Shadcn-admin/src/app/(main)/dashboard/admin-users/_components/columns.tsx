@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Admin } from "@/types/admin";
 import { Funnel, ListFilter, MoreVertical } from "lucide-react";
-
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,6 +14,13 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 
@@ -23,9 +30,71 @@ declare module "@tanstack/react-table" {
   }
 }
 
+const RoleChanger = ({
+  row,
+  onRoleChange,
+  currentUserRole,
+}: {
+  row: any;
+  onRoleChange: (admin: Admin, newRole: "Admin" | "SuperAdmin") => void;
+  currentUserRole: "Admin" | "SuperAdmin";
+}) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const admin = row.original as Admin;
+
+  const handleRoleChange = async (newRole: "Admin" | "SuperAdmin") => {
+    if (currentUserRole !== "SuperAdmin") {
+      toast.info("Only Super Admins have this privilege. Please contact support.");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      onRoleChange(admin, newRole);
+      toast.success("Role updated successfully!");
+    } catch (error) {
+      toast.error("Failed to update role.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center w-32 h-10 rounded-md">
+        <div className="loader"></div>
+      </div>
+    );
+  }
+
+  return (
+    <Select
+      defaultValue={row.getValue("role")}
+      onValueChange={handleRoleChange}
+    >
+      <SelectTrigger
+        className={`w-32 ${isLoading || currentUserRole !== "SuperAdmin" ? 'border-transparent opacity-50' : ''}`}
+        onClick={() => {
+          if (currentUserRole !== "SuperAdmin") {
+            toast.info("Only Super Admins have this privilege. Please contact support.");
+          }
+        }}
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="Admin">Admin</SelectItem>
+        <SelectItem value="SuperAdmin">Super Admin</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+};
+
 export const adminColumns = (
   handleEdit: (admin: Admin) => void,
   handleDelete: (admin: Admin) => void,
+  onRoleChange: (admin: Admin, newRole: "Admin" | "SuperAdmin") => void,
+  currentUserRole: "Admin" | "SuperAdmin",
 ): ColumnDef<Admin>[] => {
   return [
     {
@@ -95,7 +164,9 @@ export const adminColumns = (
           <FilterDropdown column={column} options={["Admin", "SuperAdmin"]} />
         </div>
       ),
-      cell: ({ row }) => <div>{row.getValue("role")}</div>,
+      cell: ({ row }) => (
+        <RoleChanger row={row} onRoleChange={onRoleChange} />
+      ),
       enableSorting: true,
       enableColumnFilter: true,
       meta: { label: "Role" },
@@ -105,6 +176,16 @@ export const adminColumns = (
       header: "Actions",
       cell: ({ row }) => {
         const admin = row.original;
+        const isDeleteDisabled = currentUserRole !== "SuperAdmin";
+
+        const handleDeleteClick = () => {
+          if (isDeleteDisabled) {
+            toast.info("Only Super Admins have this privilege. Please contact support.");
+          } else {
+            handleDelete(admin);
+          }
+        };
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -114,8 +195,11 @@ export const adminColumns = (
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleEdit(admin)}>View</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(admin)} className="text-red-600">
+              <DropdownMenuItem onClick={() => handleEdit(admin)}>Edit</DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleDeleteClick}
+                className={`text-red-600 ${isDeleteDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
