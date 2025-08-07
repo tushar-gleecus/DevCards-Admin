@@ -111,7 +111,7 @@ export function DecksDataTable({
       } catch (error) {
         console.error("Failed to delete deck:", error);
       } finally {
-        setTimeout(() => setIsLoading(false), 500);
+        setTimeout(() => setIsDeleting(false), 500);
       }
     }
   };

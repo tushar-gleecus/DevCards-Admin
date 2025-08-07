@@ -143,7 +143,7 @@ export default function EditCardPage() {
           </div>
           <div className="space-y-2">
             <label>Card Content</label>
-            <MuiTipTapEditor content={richText} onContentChange={setRichText} disabled={isLoading} />
+            <MuiTipTapEditor content={richText} onContentChange={setRichText} editable={!isLoading} />
           </div>
         </CardContent>
       </Card>
