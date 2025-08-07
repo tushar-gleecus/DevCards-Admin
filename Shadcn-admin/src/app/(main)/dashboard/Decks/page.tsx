@@ -57,7 +57,7 @@ export default function DecksPage() {
   };
 
   // Edit deck via API
-  const handleEditDeck = async (id: number, data: { name: string; description: string }) => {
+  const handleEditDeck = async (id: number, data: { name: string; description: string; status: boolean }) => {
     try {
       const updated = await updateDeck(id, data);
       setDecks((prev) => prev.map((d) => (d.id === id ? updated : d)));

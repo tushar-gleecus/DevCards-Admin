@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { ActionButton } from "@/components/ui/ActionButton";
 import { Label } from "@/components/ui/label";
 import type { Deck } from "@/lib/deckApi";
+import { toast } from "sonner";
 
 export function EditDeckDialog({
   open,
@@ -28,14 +29,41 @@ export function EditDeckDialog({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("Active");
+  const [errors, setErrors] = useState({ name: "", description: "" });
 
   useEffect(() => {
     if (deck) {
       setName(deck.name);
       setDescription(deck.description);
       setStatus(String(deck.status));
+      setErrors({ name: "", description: "" }); // Clear errors on deck change
     }
   }, [deck]);
+
+  const validateField = (fieldName: string, value: string) => {
+    const nameRegex = /^[a-zA-Z\s]*$/;
+    let errorMessage = "";
+
+    if (!value.trim()) {
+      errorMessage = `${fieldName === "name" ? "Deck name" : "Description"} is required.`;
+    } else if (!nameRegex.test(value)) {
+      errorMessage = `${fieldName === "name" ? "Deck name" : "Description"} can only contain letters and spaces.`;
+    }
+    setErrors((prevErrors) => ({ ...prevErrors, [fieldName]: errorMessage }));
+    return errorMessage === "";
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setName(value);
+    validateField("name", value);
+  };
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setDescription(value);
+    validateField("description", value);
+  };
 
   if (!deck) return null;
 
@@ -48,14 +76,17 @@ export function EditDeckDialog({
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <Label>Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
+            <Input value={name} onChange={handleNameChange} isInvalid={!!errors.name} />
+            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
           </div>
           <div className="space-y-2">
             <Label>Description</Label>
             <Input
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={handleDescriptionChange}
+              isInvalid={!!errors.description}
             />
+            {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
           </div>
           <div className="space-y-2">
             <Label>Status</Label>
@@ -77,6 +108,13 @@ export function EditDeckDialog({
           </DialogClose>
           <ActionButton
   onClick={async () => {
+    const isNameValid = validateField("name", name);
+    const isDescriptionValid = validateField("description", description);
+
+    if (!isNameValid || !isDescriptionValid) {
+      return;
+    }
+
     onSave(deck.id, {
       ...deck,
       name,
