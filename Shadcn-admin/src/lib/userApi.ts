@@ -18,6 +18,7 @@ export async function getUsers() {
 
 export async function getUserName(id: number) {
   const users = await getUsers();
+  if (!users) return "Unknown";
   const user = users.find((u) => u.id === id);
   return user ? `${user.first_name} ${user.last_name}` : "Unknown";
 }
