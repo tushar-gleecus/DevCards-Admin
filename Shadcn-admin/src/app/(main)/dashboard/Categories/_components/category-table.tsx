@@ -1,37 +1,12 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
-} from "@/components/ui/dropdown-menu";
+import { ActionButton } from "@/components/ui/ActionButton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import { EditCategoryDrawer } from "./edit-category-drawer";
-import {
-  MoreHorizontal,
-  Funnel,
-  ArrowUpAZ,
-  Eye,
-  EyeOff,
-  Download,
-  Loader2,
-} from "lucide-react";
+import { MoreHorizontal, Funnel, ArrowUpAZ, Eye, EyeOff, Download, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -90,8 +65,8 @@ type SortKey = "name" | "description" | "deck_name" | "status";
 type SortOrder = "asc" | "desc";
 
 const COLUMN_CONFIG = [
-  { key: "name", label: "Name" },
-  { key: "description", label: "Description" },
+  { key: "name", label: "Category Name" },
+  { key: "description", label: "Category Description" },
   { key: "deck_name", label: "Deck" },
   { key: "status", label: "Status" },
   { key: "created_at", label: "Created At" },
@@ -219,27 +194,34 @@ export function CategoryTable({
 
   return (
     <div className="space-y-4">
-      <Card className="border bg-background shadow-sm">
+  <Card className="bg-background shadow-sm">
         <CardHeader>
           <CardTitle>Categories</CardTitle>
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            
+            <Input
+              type="text"
+              placeholder="Search..."
+              className="max-w-sm"
+              value={search}
+              onChange={(e) => {
+                setPage(1);
+                setSearch(e.target.value);
+              }}
+            />
             <div className="flex gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="flex gap-1">
+                  <ActionButton size="sm" variant="outline" className="flex gap-1" onClick={() => {}}>
                     <Eye className="h-4 w-4" />
                     <span>Columns</span>
-                  </Button>
+                  </ActionButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {COLUMN_CONFIG.map((col) => (
                     <DropdownMenuCheckboxItem
                       key={col.key}
                       checked={visibleCols[col.key as keyof typeof visibleCols]}
-                      onCheckedChange={() =>
-                        toggleCol(col.key as keyof typeof visibleCols)
-                      }
+                      onCheckedChange={() => toggleCol(col.key as keyof typeof visibleCols)}
                     >
                       {visibleCols[col.key as keyof typeof visibleCols] ? (
                         <Eye className="mr-2 inline h-4 w-4" />
@@ -251,7 +233,7 @@ export function CategoryTable({
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button
+              <ActionButton
                 size="sm"
                 variant="outline"
                 className="flex gap-1"
@@ -264,7 +246,7 @@ export function CategoryTable({
               >
                 <Download className="h-4 w-4" />
                 Export
-              </Button>
+              </ActionButton>
             </div>
           </div>
         </CardHeader>
@@ -277,80 +259,50 @@ export function CategoryTable({
             <div className="overflow-x-auto rounded-lg">
               <Table className="bg-background">
                 <TableHeader className="bg-muted">
-                  <TableRow className="border-border">
-                    {COLUMN_CONFIG.map(
-                      (col) =>
-                        visibleCols[col.key as keyof typeof visibleCols] && (
-                          <TableHead
-                            key={col.key}
-                            className="relative cursor-pointer select-none"
-                            onClick={() => handleSort(col.key as SortKey)}
+                  <TableRow>
+                    {COLUMN_CONFIG.filter((col) => visibleCols[col.key as keyof typeof visibleCols]).map((col) => (
+                      <TableHead
+                        key={col.key}
+                        className="relative cursor-pointer select-none"
+                        onClick={() => handleSort(col.key as SortKey)}
+                      >
+                        <div className="flex items-center gap-1">
+                          {col.label}
+                          <DropdownMenu
+                            open={filterOpen[col.key as SortKey]}
+                            onOpenChange={(open) => setFilterOpen((fo) => ({ ...fo, [col.key]: open }))}
                           >
-                            {col.label}
-                            <DropdownMenu
-                              open={filterOpen[col.key as SortKey]}
-                              onOpenChange={(open) =>
-                                setFilterOpen((fo) => ({
-                                  ...fo,
-                                  [col.key]: open,
-                                }))
-                              }
-                            >
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="ml-1 h-6 w-6 px-1"
-                                >
-                                  <Funnel className="text-muted-foreground h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                align="start"
-                                className="w-48"
+                            <DropdownMenuTrigger asChild>
+                              <ActionButton variant="ghost" size="icon" className="h-6 w-6 p-1" onClick={() => {}}>
+                                <Funnel className="h-4 w-4 text-muted-foreground" />
+                              </ActionButton>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-48 p-2">
+                              <div className="text-xs text-muted-foreground mb-1">
+                                Filter by {col.label}
+                              </div>
+                              <Input
+                                className="w-full rounded border px-2 py-1 text-sm"
+                                placeholder="Contains..."
+                                value={filters[col.key as SortKey] ?? ""}
+                                onChange={(e) => setFilters((f) => ({ ...f, [col.key]: e.target.value }))}
+                              />
+                              <ActionButton
+                                variant="ghost"
+                                size="sm"
+                                className="mt-2 w-full"
+                                onClick={() => setFilters((f) => ({ ...f, [col.key]: "" }))}
                               >
-                                <div className="px-2 py-2">
-                                  <div className="text-muted-foreground mb-1 text-xs">
-                                    Filter by {col.label}
-                                  </div>
-                                  <input
-                                    className="w-full rounded border px-2 py-1 text-sm"
-                                    placeholder="Contains..."
-                                    value={filters[col.key as SortKey] ?? ""}
-                                    onChange={(e) =>
-                                      setFilters((f) => ({
-                                        ...f,
-                                        [col.key]: e.target.value,
-                                      }))
-                                    }
-                                  />
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="mt-2 w-full"
-                                    onClick={() => {
-                                      setFilters((f) => ({
-                                        ...f,
-                                        [col.key]: "",
-                                      }));
-                                      setFilterOpen((fo) => ({ ...fo, [col.key]: false }));
-                                    }}
-                                  >
-                                    Clear Filter
-                                  </Button>
-                                </div>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                            <ArrowUpAZ
-                              className={`ml-1 inline h-4 w-4 cursor-pointer align-middle transition-transform ${
-                                sortKey === col.key && sortOrder === "desc"
-                                  ? "rotate-180"
-                                  : ""
-                              }`}
-                            />
-                          </TableHead>
-                        )
-                    )}
+                                Clear Filter
+                              </ActionButton>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          <ArrowUpAZ
+                            className={`h-4 w-4 transition-transform ${sortKey === col.key && sortOrder === "desc" ? "rotate-180" : ""}`}
+                          />
+                        </div>
+                      </TableHead>
+                    ))}
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -380,7 +332,9 @@ export function CategoryTable({
                               className={`inline-block rounded px-2 py-1 text-xs font-medium ${
                                 cat.status === "Active"
                                   ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-400"
-                                  : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-400"
+                                  : cat.status === "Inactive"
+                                  ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-400"
+                                  : "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-400"
                               }`}
                             >
                               {cat.status}
@@ -395,9 +349,9 @@ export function CategoryTable({
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
+                              <ActionButton variant="ghost" size="icon" onClick={() => {}}>
                                 <MoreHorizontal className="h-4 w-4" />
-                              </Button>
+                              </ActionButton>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
@@ -412,7 +366,7 @@ export function CategoryTable({
                                   setDeleteCategoryId(Number(cat.id));
                                   setConfirmDeleteOpen(true);
                                 }}
-                                className="text-red-_600"
+                                className="text-red-600"
                               >
                                 Delete
                               </DropdownMenuItem>

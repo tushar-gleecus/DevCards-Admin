@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import MUIThemeRegistry from "@/components/MUIThemeRegistry";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 import "react-phone-input-2/lib/style.css";
@@ -19,8 +20,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className={[inter.className, "min-h-screen", "antialiased"].join(" ")}>
         <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange enableSystem={false}>
-          {children}
-          <Toaster />
+          <MUIThemeRegistry>
+            {children}
+            <Toaster />
+          </MUIThemeRegistry>
         </ThemeProvider>
       </body>
     </html>

@@ -58,7 +58,8 @@ const useStyles = makeStyles<{ stickyOffset?: number }>({
       position: "sticky",
       top: stickyOffset ?? 0,
       zIndex: Z_INDEXES.MENU_BAR,
-      background: theme.palette.background.default,
+      // Use background.paper for better dark mode support
+      background: theme.palette.background.paper,
     },
 
     nonSticky: {},

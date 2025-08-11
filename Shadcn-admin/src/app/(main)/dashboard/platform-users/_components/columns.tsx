@@ -79,7 +79,11 @@ export const platformUserColumns = (
     header: ({ column }) => (
       <div className="flex items-center gap-2">
         <span>Status</span>
-        {/* (Your filter/sort controls if any) */}
+        <ListFilter
+          className="text-muted-foreground h-4 w-4 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        />
+        <FilterDropdown column={column} options={["Active", "Inactive", "Pending", "Done"]} />
       </div>
     ),
     cell: ({ row }) => {
