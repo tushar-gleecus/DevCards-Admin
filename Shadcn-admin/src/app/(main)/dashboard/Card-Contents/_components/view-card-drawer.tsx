@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/drawer";
 import { Badge } from "@/components/ui/badge";
 import type { CardContent } from "@/types/card-content";
+import { useEffect, useState } from "react";
+import { getUserName } from "@/lib/userApi";
 import { format } from "date-fns";
 
 interface ViewCardDrawerProps {
@@ -20,6 +22,22 @@ interface ViewCardDrawerProps {
 }
 
 export function ViewCardDrawer({ cardContent, onClose, categoryMap }: ViewCardDrawerProps) {
+  const [createdByName, setCreatedByName] = useState<string>("");
+  const [updatedByName, setUpdatedByName] = useState<string>("");
+
+  useEffect(() => {
+    if (cardContent?.created_by) {
+      getUserName(cardContent.created_by).then(setCreatedByName);
+    } else {
+      setCreatedByName("");
+    }
+    if (cardContent?.updated_by) {
+      getUserName(cardContent.updated_by).then(setUpdatedByName);
+    } else {
+      setUpdatedByName("");
+    }
+  }, [cardContent]);
+
   const getStatusBadgeClass = (status: string) => {
     switch (status.toLowerCase()) {
       case "published":
@@ -43,6 +61,7 @@ export function ViewCardDrawer({ cardContent, onClose, categoryMap }: ViewCardDr
         </DrawerHeader>
         {cardContent && (
           <div className="grid grid-cols-3 gap-6 p-4 flex-grow overflow-y-auto">
+
             {/* Row 1 */}
             <div className="space-y-2">
               <h3 className="font-semibold">Name</h3>
@@ -63,12 +82,17 @@ export function ViewCardDrawer({ cardContent, onClose, categoryMap }: ViewCardDr
               </div>
             </div>
 
+
             {/* Row 2 */}
             <div className="space-y-2">
               <h3 className="font-semibold">Category</h3>
               <div className="border p-2 rounded-md min-h-[40px]">
                 {categoryMap[cardContent.category_id]?.name || "N/A"}
               </div>
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-semibold">Read Time</h3>
+              <div className="border p-2 rounded-md min-h-[40px]">{cardContent.read_time} min</div>
             </div>
             <div className="space-y-2">
               <h3 className="font-semibold">Created At</h3>
@@ -85,6 +109,14 @@ export function ViewCardDrawer({ cardContent, onClose, categoryMap }: ViewCardDr
                   ? format(new Date(cardContent.updated_at), "PPP")
                   : "N/A"}
               </div>
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-semibold">Created By</h3>
+              <div className="border p-2 rounded-md min-h-[40px]">{createdByName || cardContent.created_by || "N/A"}</div>
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-semibold">Updated By</h3>
+              <div className="border p-2 rounded-md min-h-[40px]">{updatedByName || cardContent.updated_by || "N/A"}</div>
             </div>
 
             {/* Row 3 */}
