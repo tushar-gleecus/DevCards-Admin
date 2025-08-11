@@ -14,7 +14,7 @@ type AdminWithoutId = Omit<Admin, "id">;
 const nameRegex = /^[A-Za-z\s-]+$/;
 const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/;
 
-export default function AdminForm({ onAddAdmin, currentUserRole }: { onAddAdmin: (admin: AdminWithoutId) => void; currentUserRole: "Admin" | "SuperAdmin" }) {
+export default function AdminForm({ onAddAdmin, currentUserRole }: { onAddAdmin: (admin: AdminWithoutId) => void; currentUserRole?: "Admin" | "SuperAdmin" }) {
   const [form, setForm] = useState<AdminWithoutId>({
     first_name: "",
     last_name: "",
@@ -84,18 +84,13 @@ export default function AdminForm({ onAddAdmin, currentUserRole }: { onAddAdmin:
     if (Object.keys(validationErrors).length > 0) return;
 
     setLoading(true);
-    setTimeout(() => {
-      onAddAdmin(form);
+    try {
+      await onAddAdmin(form);
       setForm({ first_name: "", last_name: "", email: "", role: "Admin" });
       setTouched({});
-      setLoading(false);
       toast.success("A welcome email has been sent and the admin user was added.");
-    }, 1800);
-  };
-
-  const handleRoleSelectClick = () => {
-    if (currentUserRole !== "SuperAdmin") {
-      toast.info("Only Super Admins have this privilege. Please contact support.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -161,38 +156,26 @@ export default function AdminForm({ onAddAdmin, currentUserRole }: { onAddAdmin:
           <Label>
             Role <span className="text-red-500">*</span>
           </Label>
-          {currentUserRole === "SuperAdmin" ? (
-            <Select
-              value={form.role}
-              onValueChange={(value) => {
-                handleChange("role", value as AdminWithoutId["role"]);
-              }}
-            >
-              <SelectTrigger
-                className={`max-w-xs border border-zinc-400 focus:border-zinc-600 ${
-                  touched.role && errors.role ? "border-red-500" : ""
-                }`}
-              >
-                <SelectValue />
-              </SelectTrigger>
-
-              <SelectContent>
-                <SelectItem value="Admin">Admin</SelectItem>
-                <SelectItem value="SuperAdmin">SuperAdmin</SelectItem>
-              </SelectContent>
-            </Select>
-          ) : (
-            <div
-              className={`max-w-xs border border-zinc-400 focus:border-zinc-600 p-2 rounded-md cursor-pointer ${
+          <Select
+            value={form.role}
+            onValueChange={(value) => {
+              handleChange("role", value as AdminWithoutId["role"]);
+            }}
+            disabled={currentUserRole !== "SuperAdmin"}
+          >
+            <SelectTrigger
+              className={`max-w-xs border border-zinc-400 focus:border-zinc-600 ${
                 touched.role && errors.role ? "border-red-500" : ""
               }`}
-              onClick={() => {
-                toast.info("Only Super Admins have this privilege. Please contact support.");
-              }}
             >
-              {form.role}
-            </div>
-          )}
+              <SelectValue />
+            </SelectTrigger>
+
+            <SelectContent>
+              <SelectItem value="Admin">Admin</SelectItem>
+              {currentUserRole === "SuperAdmin" && <SelectItem value="SuperAdmin">SuperAdmin</SelectItem>}
+            </SelectContent>
+          </Select>
           <p className="text-muted-foreground text-xs">The selected role will determine the user's permissions.</p>
           {touched.role && errors.role && <p className="text-xs text-red-600">{errors.role}</p>}
         </div>
@@ -202,9 +185,10 @@ export default function AdminForm({ onAddAdmin, currentUserRole }: { onAddAdmin:
             
             className="flex items-center"
             type="submit"
+            disabled={loading}
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {loading ? "Submitting..." : "Save"}
+            {loading ? "Creating..." : "Create"}
           </Button>
           {success && <p className="mt-2 text-sm text-green-600">{success}</p>}
         </div>

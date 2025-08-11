@@ -12,16 +12,20 @@ import { Loader2 } from "lucide-react";
 const nameRegex = /^[A-Za-z\s-]+$/;
 const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/;
 
+import { toast } from "sonner";
+
 export function EditAdminDrawer({
   open,
   onOpenChange,
   data,
   onSubmit,
+  currentUserRole,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   data: Admin | null;
   onSubmit: (admin: Admin) => void;
+  currentUserRole: "Admin" | "SuperAdmin";
 }) {
   const [form, setForm] = useState<Admin | null>(data);
   const [isLoading, setIsLoading] = useState(false);

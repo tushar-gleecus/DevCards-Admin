@@ -37,25 +37,32 @@ const RoleChanger = ({
 }: {
   row: any;
   onRoleChange: (admin: Admin, newRole: "Admin" | "SuperAdmin") => void;
-  currentUserRole: "Admin" | "SuperAdmin";
+  currentUserRole?: "Admin" | "SuperAdmin";
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const admin = row.original as Admin;
+  const isRoleChangeDisabled = currentUserRole !== "SuperAdmin";
 
   const handleRoleChange = async (newRole: "Admin" | "SuperAdmin") => {
-    if (currentUserRole !== "SuperAdmin") {
-      toast.info("Only Super Admins have this privilege. Please contact support.");
+    if (isRoleChangeDisabled) {
+      toast.info("Only Super Admins can change roles.");
       return;
     }
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      onRoleChange(admin, newRole);
+      await onRoleChange(admin, newRole);
       toast.success("Role updated successfully!");
     } catch (error) {
       toast.error("Failed to update role.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleTriggerClick = (e: React.MouseEvent) => {
+    if (isRoleChangeDisabled) {
+      e.preventDefault();
+      toast.info("Only Super Admins can change roles.");
     }
   };
 
@@ -71,14 +78,11 @@ const RoleChanger = ({
     <Select
       defaultValue={row.getValue("role")}
       onValueChange={handleRoleChange}
+      disabled={isRoleChangeDisabled}
     >
       <SelectTrigger
-        className={`w-32 ${isLoading || currentUserRole !== "SuperAdmin" ? 'border-transparent opacity-50' : ''}`}
-        onClick={() => {
-          if (currentUserRole !== "SuperAdmin") {
-            toast.info("Only Super Admins have this privilege. Please contact support.");
-          }
-        }}
+        className={`w-32 ${isRoleChangeDisabled ? 'border-transparent opacity-50 cursor-not-allowed' : ''}`}
+        onClick={handleTriggerClick}
       >
         <SelectValue />
       </SelectTrigger>
@@ -94,7 +98,7 @@ export const adminColumns = (
   handleEdit: (admin: Admin) => void,
   handleDelete: (admin: Admin) => void,
   onRoleChange: (admin: Admin, newRole: "Admin" | "SuperAdmin") => void,
-  currentUserRole: "Admin" | "SuperAdmin",
+  currentUserRole?: "Admin" | "SuperAdmin",
 ): ColumnDef<Admin>[] => {
   return [
     {
@@ -165,7 +169,7 @@ export const adminColumns = (
         </div>
       ),
       cell: ({ row }) => (
-        <RoleChanger row={row} onRoleChange={onRoleChange} />
+        <RoleChanger row={row} onRoleChange={onRoleChange} currentUserRole={currentUserRole} />
       ),
       enableSorting: true,
       enableColumnFilter: true,
@@ -180,7 +184,7 @@ export const adminColumns = (
 
         const handleDeleteClick = () => {
           if (isDeleteDisabled) {
-            toast.info("Only Super Admins have this privilege. Please contact support.");
+            toast.info("Only Super Admins can delete users.");
           } else {
             handleDelete(admin);
           }
@@ -198,6 +202,7 @@ export const adminColumns = (
               <DropdownMenuItem onClick={() => handleEdit(admin)}>Edit</DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleDeleteClick}
+                disabled={isDeleteDisabled}
                 className={`text-red-600 ${isDeleteDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 Delete
@@ -222,7 +227,7 @@ function FilterDropdown({ column, options }: { column: any; options?: string[] }
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="h-4 w-4 p-0">
-          <img src="\funnel.svg" style={{ color: "#CBCDD1" }} />
+          <Funnel className="h-4 w-4 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-52 space-y-2 p-2">
@@ -245,6 +250,11 @@ function FilterDropdown({ column, options }: { column: any; options?: string[] }
             placeholder="Contains..."
             value={value || ""}
             onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                applyFilter();
+              }
+            }}
             onBlur={applyFilter}
           />
         )}
