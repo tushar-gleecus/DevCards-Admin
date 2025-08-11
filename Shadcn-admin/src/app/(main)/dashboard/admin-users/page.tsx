@@ -243,7 +243,7 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      <EditAdminDrawer open={editOpen} onOpenChange={setEditOpen} data={selectedAdmin} onSubmit={handleSaveEdit} />
+  <EditAdminDrawer open={editOpen} onOpenChange={setEditOpen} data={selectedAdmin} onSubmit={handleSaveEdit} currentUserRole={currentUserRole ?? "Admin"} />
       <DeleteAdminDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={handleConfirmDelete} isLoading={isDeleting} />
     </div>
   );
