@@ -14,7 +14,7 @@ import { getDecks } from '@/lib/deckApi';
 import { CategoryTable } from './_components/category-table';
 import { CategoryForm } from './_components/category-form';
 import { CategoriesChart } from './_components/chart';
-import { Input } from '@/components/ui/input';
+// import { Input } from '@/components/ui/input';
 import { SectionCards } from "../default/_components/section-cards";
 import {
   Card,
@@ -42,7 +42,7 @@ export default function CategoriesPage() {
   const [decks, setDecks] = useState<UIDeck[]>([]);
   const [categories, setCategories] = useState<UICategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  // const [search, setSearch] = useState('');
 
   useEffect(() => {
     async function fetchData() {
@@ -176,13 +176,13 @@ export default function CategoriesPage() {
     { title: 'Growth', value: '12%', trend: '+2%' },
   ];
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-  };
+  // const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   setSearch(e.target.value);
+  // };
 
-  const filteredCategories = categories.filter((cat) =>
-    cat.name.toLowerCase().includes(search.toLowerCase())
-  );
+  // const filteredCategories = categories.filter((cat) =>
+  //   cat.name.toLowerCase().includes(search.toLowerCase())
+  // );
 
   return (
     <div className="flex flex-col gap-6 p-6 @container/main">
@@ -241,17 +241,8 @@ export default function CategoriesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-2 flex items-center">
-            <Input
-              type="text"
-              placeholder="Search..."
-              value={search}
-              onChange={handleSearch}
-              className="w-72"
-            />
-          </div>
           <CategoryTable
-            categories={filteredCategories}
+            categories={categories}
             decks={decks}
             onEditCategory={handleEditCategory}
             onDeleteCategory={handleDeleteCategory}

@@ -43,7 +43,9 @@ export default function Editor({ disableStickyMenuBar, content, onContentChange,
 
   useEffect(() => {
     if (rteRef.current?.editor) {
-      rteRef.current.editor.commands.setContent(content);
+      setTimeout(() => {
+        rteRef.current?.editor?.commands.setContent(content);
+      }, 0);
     }
   }, [content]);
 

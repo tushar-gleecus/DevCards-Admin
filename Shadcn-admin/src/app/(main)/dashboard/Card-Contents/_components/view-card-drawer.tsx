@@ -60,81 +60,33 @@ export function ViewCardDrawer({ cardContent, onClose, categoryMap }: ViewCardDr
           </div>
         </DrawerHeader>
         {cardContent && (
-          <div className="grid grid-cols-3 gap-6 p-4 flex-grow overflow-y-auto">
-
-            {/* Row 1 */}
-            <div className="space-y-2">
-              <h3 className="font-semibold">Name</h3>
-              <div className="border p-2 rounded-md min-h-[40px]">{cardContent.name}</div>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold">Deck</h3>
-              <div className="border p-2 rounded-md min-h-[40px]">
-                {categoryMap[cardContent.category_id]?.deckName || "N/A"}
+          <div className="flex flex-col gap-8 p-4 flex-grow overflow-y-auto">
+            <section>
+              <h2 className="text-2xl font-bold mb-2">{cardContent.name}</h2>
+              <div className="flex flex-wrap gap-6 text-base">
+                <div><span className="font-semibold">Deck:</span> {categoryMap[cardContent.category_id]?.deckName || "N/A"}</div>
+                <div><span className="font-semibold">Category:</span> {categoryMap[cardContent.category_id]?.name || "N/A"}</div>
+                <div><span className="font-semibold">Status:</span> <Badge className={getStatusBadgeClass(cardContent.status)}>{cardContent.status}</Badge></div>
+                <div><span className="font-semibold">Read Time:</span> {cardContent.read_time} min</div>
+                <div><span className="font-semibold">Created At:</span> {cardContent.created_at ? format(new Date(cardContent.created_at), "PPP") : "N/A"}</div>
+                <div><span className="font-semibold">Updated At:</span> {cardContent.updated_at ? format(new Date(cardContent.updated_at), "PPP") : "N/A"}</div>
+                <div><span className="font-semibold">Created By:</span> {createdByName || cardContent.created_by || "N/A"}</div>
+                <div><span className="font-semibold">Updated By:</span> {updatedByName || cardContent.updated_by || "N/A"}</div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold">Status</h3>
-              <div className="border p-2 rounded-md min-h-[40px]">
-                <Badge className={getStatusBadgeClass(cardContent.status)}>
-                  {cardContent.status}
-                </Badge>
-              </div>
-            </div>
-
-
-            {/* Row 2 */}
-            <div className="space-y-2">
-              <h3 className="font-semibold">Category</h3>
-              <div className="border p-2 rounded-md min-h-[40px]">
-                {categoryMap[cardContent.category_id]?.name || "N/A"}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold">Read Time</h3>
-              <div className="border p-2 rounded-md min-h-[40px]">{cardContent.read_time} min</div>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold">Created At</h3>
-              <div className="border p-2 rounded-md min-h-[40px]">
-                {cardContent.created_at
-                  ? format(new Date(cardContent.created_at), "PPP")
-                  : "N/A"}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold">Updated At</h3>
-              <div className="border p-2 rounded-md min-h-[40px]">
-                {cardContent.updated_at
-                  ? format(new Date(cardContent.updated_at), "PPP")
-                  : "N/A"}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold">Created By</h3>
-              <div className="border p-2 rounded-md min-h-[40px]">{createdByName || cardContent.created_by || "N/A"}</div>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold">Updated By</h3>
-              <div className="border p-2 rounded-md min-h-[40px]">{updatedByName || cardContent.updated_by || "N/A"}</div>
-            </div>
-
-            {/* Row 3 */}
-            <div className="col-span-3 space-y-2">
-              <h3 className="font-semibold">Short Description</h3>
-              <div className="border p-2 rounded-md min-h-[80px]">
+            </section>
+            <section>
+              <h3 className="font-semibold mb-1">Short Description</h3>
+              <div className="border p-3 rounded-md min-h-[60px] bg-muted/50">
                 {cardContent.short_description}
               </div>
-            </div>
-
-            {/* Row 4 */}
-            <div className="col-span-3 space-y-2">
-              <h3 className="font-semibold">Card Content</h3>
+            </section>
+            <section>
+              <h3 className="font-semibold mb-1">Card Content</h3>
               <div
-                className="border p-2 rounded-md prose dark:prose-invert max-w-none min-h-[200px]"
+                className="border p-3 rounded-md prose dark:prose-invert max-w-none min-h-[200px] bg-muted/50"
                 dangerouslySetInnerHTML={{ __html: cardContent.description }}
               />
-            </div>
+            </section>
           </div>
         )}
         <div className="pt-4 flex justify-end">
