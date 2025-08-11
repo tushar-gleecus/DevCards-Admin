@@ -39,44 +39,69 @@ export function ViewCardDrawer({ cardContent, onClose, categoryMap }: ViewCardDr
         <DrawerHeader className="flex items-center justify-between pb-4">
           <div className="flex flex-row items-center gap-2">
             <DrawerTitle>View Card</DrawerTitle>
-            {cardContent && (
-              <Badge className={getStatusBadgeClass(cardContent.status)}>
-                {cardContent.status}
-              </Badge>
-            )}
           </div>
         </DrawerHeader>
         {cardContent && (
-          <div className="grid grid-cols-4 gap-4 p-4 pb-0 flex-grow overflow-y-auto">
-            <div className="col-span-1 space-y-2">
+          <div className="grid grid-cols-3 gap-6 p-4 flex-grow overflow-y-auto">
+            {/* Row 1 */}
+            <div className="space-y-2">
               <h3 className="font-semibold">Name</h3>
-              <div className="border p-2 rounded-md">{cardContent.name}</div>
+              <div className="border p-2 rounded-md min-h-[40px]">{cardContent.name}</div>
             </div>
-            <div className="col-span-1 space-y-2">
-              <h3 className="font-semibold">Category</h3>
-              <div className="border p-2 rounded-md">
-                {categoryMap[cardContent.category_id]?.name || "N/A"}
-              </div>
-            </div>
-            <div className="col-span-1 space-y-2">
+            <div className="space-y-2">
               <h3 className="font-semibold">Deck</h3>
-              <div className="border p-2 rounded-md">
+              <div className="border p-2 rounded-md min-h-[40px]">
                 {categoryMap[cardContent.category_id]?.deckName || "N/A"}
               </div>
             </div>
-            <div className="col-span-1 space-y-2">
-              <h3 className="font-semibold">Created At</h3>
-              <div className="border p-2 rounded-md">
-                {cardContent.created_at ? format(new Date(cardContent.created_at), "PPP") : "N/A"}
+            <div className="space-y-2">
+              <h3 className="font-semibold">Status</h3>
+              <div className="border p-2 rounded-md min-h-[40px]">
+                <Badge className={getStatusBadgeClass(cardContent.status)}>
+                  {cardContent.status}
+                </Badge>
               </div>
             </div>
-            <div className="col-span-full space-y-2">
-              <h3 className="font-semibold">Short Description</h3>
-              <div className="border p-2 rounded-md">{cardContent.short_description}</div>
+
+            {/* Row 2 */}
+            <div className="space-y-2">
+              <h3 className="font-semibold">Category</h3>
+              <div className="border p-2 rounded-md min-h-[40px]">
+                {categoryMap[cardContent.category_id]?.name || "N/A"}
+              </div>
             </div>
-            <div className="col-span-full space-y-2">
+            <div className="space-y-2">
+              <h3 className="font-semibold">Created At</h3>
+              <div className="border p-2 rounded-md min-h-[40px]">
+                {cardContent.created_at
+                  ? format(new Date(cardContent.created_at), "PPP")
+                  : "N/A"}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-semibold">Updated At</h3>
+              <div className="border p-2 rounded-md min-h-[40px]">
+                {cardContent.updated_at
+                  ? format(new Date(cardContent.updated_at), "PPP")
+                  : "N/A"}
+              </div>
+            </div>
+
+            {/* Row 3 */}
+            <div className="col-span-3 space-y-2">
+              <h3 className="font-semibold">Short Description</h3>
+              <div className="border p-2 rounded-md min-h-[80px]">
+                {cardContent.short_description}
+              </div>
+            </div>
+
+            {/* Row 4 */}
+            <div className="col-span-3 space-y-2">
               <h3 className="font-semibold">Card Content</h3>
-              <div className="border p-2 rounded-md prose dark:prose-invert" dangerouslySetInnerHTML={{ __html: cardContent.description }} />
+              <div
+                className="border p-2 rounded-md prose dark:prose-invert max-w-none min-h-[200px]"
+                dangerouslySetInnerHTML={{ __html: cardContent.description }}
+              />
             </div>
           </div>
         )}

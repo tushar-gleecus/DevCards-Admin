@@ -11,14 +11,6 @@ type DataTableProps<TData> = {
 export function DataTable<TData>({ table }: DataTableProps<TData>) {
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Input
-          placeholder="Search..."
-          value={table.getState().globalFilter ?? ""}
-          onChange={(e) => table.setGlobalFilter(e.target.value)}
-          className="max-w-sm border border-zinc-400 focus:border-zinc-600"
-        />
-      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>

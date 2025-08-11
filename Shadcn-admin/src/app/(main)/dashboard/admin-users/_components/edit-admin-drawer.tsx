@@ -135,21 +135,11 @@ export function EditAdminDrawer({
               {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Input
-                id="status"
-                value={form.status ? "Active" : "Inactive"}
-                disabled
-                
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="created_at">Created At</Label>
               <Input
                 id="created_at"
-                value={new Date(form.created_at).toLocaleString()}
+                value={form.created_at ? new Date(form.created_at).toLocaleString() : "N/A"}
                 disabled
-                
               />
             </div>
             <div className="space-y-2">
@@ -167,7 +157,6 @@ export function EditAdminDrawer({
                 id="updated_at"
                 value={form.updated_at ? new Date(form.updated_at).toLocaleString() : "N/A"}
                 disabled
-                
               />
             </div>
             <div className="space-y-2">
@@ -184,7 +173,17 @@ export function EditAdminDrawer({
         </div>
         <DrawerFooter className="pt-4 mt-4">
           <div className="flex justify-center space-x-2 w-fit mx-auto">
-            <Button onClick={handleSubmit} disabled={isLoading || hasErrors} size="sm">
+            <Button
+              onClick={() => {
+                if (currentUserRole !== "SuperAdmin" && form?.role === "SuperAdmin") {
+                  toast.info("Admins do not have this privilege. Contact support.");
+                  return;
+                }
+                handleSubmit();
+              }}
+              disabled={isLoading || hasErrors}
+              size="sm"
+            >
               {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : "Save Changes"}
             </Button>
             <DrawerClose asChild>

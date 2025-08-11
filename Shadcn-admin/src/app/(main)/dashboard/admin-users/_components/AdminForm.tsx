@@ -159,9 +159,12 @@ export default function AdminForm({ onAddAdmin, currentUserRole }: { onAddAdmin:
           <Select
             value={form.role}
             onValueChange={(value) => {
+              if (value === "SuperAdmin" && currentUserRole !== "SuperAdmin") {
+                toast.info("Admins do not have this privilege. Contact support.");
+                return;
+              }
               handleChange("role", value as AdminWithoutId["role"]);
             }}
-            disabled={currentUserRole !== "SuperAdmin"}
           >
             <SelectTrigger
               className={`max-w-xs border border-zinc-400 focus:border-zinc-600 ${
@@ -173,7 +176,7 @@ export default function AdminForm({ onAddAdmin, currentUserRole }: { onAddAdmin:
 
             <SelectContent>
               <SelectItem value="Admin">Admin</SelectItem>
-              {currentUserRole === "SuperAdmin" && <SelectItem value="SuperAdmin">SuperAdmin</SelectItem>}
+              <SelectItem value="SuperAdmin">SuperAdmin</SelectItem>
             </SelectContent>
           </Select>
           <p className="text-muted-foreground text-xs">The selected role will determine the user's permissions.</p>

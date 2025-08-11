@@ -40,19 +40,25 @@ const RoleChanger = ({
   currentUserRole?: "Admin" | "SuperAdmin";
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<string>(row.getValue("role"));
   const admin = row.original as Admin;
-  const isRoleChangeDisabled = currentUserRole !== "SuperAdmin";
+  const isRoleChangeAllowed = currentUserRole === "SuperAdmin";
+  const isSuperAdminRow = admin.role === "SuperAdmin";
 
   const handleRoleChange = async (newRole: "Admin" | "SuperAdmin") => {
-    if (isRoleChangeDisabled) {
-      toast.info("Only Super Admins can change roles.");
+    if (!isRoleChangeAllowed) {
+      toast.info("Admins do not have this privilege. Contact support.");
+      // Reset dropdown to original value
+      setSelectedRole(row.getValue("role"));
       return;
     }
     setIsLoading(true);
     try {
       await onRoleChange(admin, newRole);
+      setSelectedRole(newRole);
       toast.success("Role updated successfully!");
     } catch (error) {
+      setSelectedRole(row.getValue("role"));
       toast.error("Failed to update role.");
     } finally {
       setIsLoading(false);
@@ -60,9 +66,9 @@ const RoleChanger = ({
   };
 
   const handleTriggerClick = (e: React.MouseEvent) => {
-    if (isRoleChangeDisabled) {
+    if (!isRoleChangeAllowed) {
       e.preventDefault();
-      toast.info("Only Super Admins can change roles.");
+      toast.info("Admins do not have this privilege. Contact support.");
     }
   };
 
@@ -76,12 +82,12 @@ const RoleChanger = ({
 
   return (
     <Select
-      defaultValue={row.getValue("role")}
+      value={selectedRole}
       onValueChange={handleRoleChange}
-      disabled={isRoleChangeDisabled}
+      // Always enabled so toast can show
     >
       <SelectTrigger
-        className={`w-32 ${isRoleChangeDisabled ? 'border-transparent opacity-50 cursor-not-allowed' : ''}`}
+        className={`w-32 ${!isRoleChangeAllowed ? 'border-transparent opacity-50 cursor-not-allowed' : ''}`}
         onClick={handleTriggerClick}
       >
         <SelectValue />
@@ -180,14 +186,14 @@ export const adminColumns = (
       header: "Actions",
       cell: ({ row }) => {
         const admin = row.original;
-        const isDeleteDisabled = currentUserRole !== "SuperAdmin";
-
+        // Only SuperAdmins can delete, and no one can delete Admins or SuperAdmins
+        const isDeleteAllowed = currentUserRole === "SuperAdmin" && admin.role !== "SuperAdmin" && admin.role !== "Admin";
         const handleDeleteClick = () => {
-          if (isDeleteDisabled) {
-            toast.info("Only Super Admins can delete users.");
-          } else {
-            handleDelete(admin);
+          if (!isDeleteAllowed) {
+            toast.info("Admins do not have this privilege. Contact support.");
+            return;
           }
+          handleDelete(admin);
         };
 
         return (
@@ -202,8 +208,7 @@ export const adminColumns = (
               <DropdownMenuItem onClick={() => handleEdit(admin)}>Edit</DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleDeleteClick}
-                disabled={isDeleteDisabled}
-                className={`text-red-600 ${isDeleteDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`text-red-600 ${!isDeleteAllowed ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 Delete
               </DropdownMenuItem>
