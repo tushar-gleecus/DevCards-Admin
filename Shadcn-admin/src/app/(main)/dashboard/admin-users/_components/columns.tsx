@@ -42,13 +42,13 @@ const RoleChanger = ({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState<string>(row.getValue("role"));
   const admin = row.original as Admin;
+  // Only SuperAdmins can change roles
   const isRoleChangeAllowed = currentUserRole === "SuperAdmin";
   const isSuperAdminRow = admin.role === "SuperAdmin";
 
   const handleRoleChange = async (newRole: "Admin" | "SuperAdmin") => {
     if (!isRoleChangeAllowed) {
-      toast.info("Admins do not have this privilege. Contact support.");
-      // Reset dropdown to original value
+      toast.info("Admins do not have permission to change roles.");
       setSelectedRole(row.getValue("role"));
       return;
     }
@@ -186,11 +186,11 @@ export const adminColumns = (
       header: "Actions",
       cell: ({ row }) => {
         const admin = row.original;
-        // Only SuperAdmins can delete, and no one can delete Admins or SuperAdmins
-        const isDeleteAllowed = currentUserRole === "SuperAdmin" && admin.role !== "SuperAdmin" && admin.role !== "Admin";
+        // Only SuperAdmins can delete anyone. Admins cannot delete anyone.
+        const isDeleteAllowed = currentUserRole === "SuperAdmin";
         const handleDeleteClick = () => {
           if (!isDeleteAllowed) {
-            toast.info("Admins do not have this privilege. Contact support.");
+            toast.info("Admins do not have permission to delete users.");
             return;
           }
           handleDelete(admin);
