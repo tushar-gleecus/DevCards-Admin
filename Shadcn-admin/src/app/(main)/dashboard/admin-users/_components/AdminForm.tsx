@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { Admin } from "@/types/admin";
+import { toast } from "sonner";
 
 type AdminWithoutId = Omit<Admin, "id">;
 
 const nameRegex = /^[A-Za-z\s-]+$/;
 const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/;
 
-export default function AdminForm({ onAddAdmin }: { onAddAdmin: (admin: AdminWithoutId) => void }) {
+export default function AdminForm({ onAddAdmin, currentUserRole }: { onAddAdmin: (admin: AdminWithoutId) => void; currentUserRole?: "Admin" | "SuperAdmin" }) {
   const [form, setForm] = useState<AdminWithoutId>({
     first_name: "",
     last_name: "",
@@ -83,15 +84,14 @@ export default function AdminForm({ onAddAdmin }: { onAddAdmin: (admin: AdminWit
     if (Object.keys(validationErrors).length > 0) return;
 
     setLoading(true);
-    setSuccess("");
-    setTimeout(() => {
-      onAddAdmin(form);
+    try {
+      await onAddAdmin(form);
       setForm({ first_name: "", last_name: "", email: "", role: "Admin" });
       setTouched({});
+      toast.success("A welcome email has been sent and the admin user was added.");
+    } finally {
       setLoading(false);
-      setSuccess("A welcome email has been sent and the admin user was added.");
-      setTimeout(() => setSuccess(""), 4000);
-    }, 1800);
+    }
   };
 
   return (
@@ -158,8 +158,13 @@ export default function AdminForm({ onAddAdmin }: { onAddAdmin: (admin: AdminWit
           </Label>
           <Select
             value={form.role}
-            onValueChange={(value) => handleChange("role", value as AdminWithoutId["role"])}
-            disabled={loading}
+            onValueChange={(value) => {
+              if (value === "SuperAdmin" && currentUserRole !== "SuperAdmin") {
+                toast.info("Admins do not have this privilege. Contact support.");
+                return;
+              }
+              handleChange("role", value as AdminWithoutId["role"]);
+            }}
           >
             <SelectTrigger
               className={`max-w-xs border border-zinc-400 focus:border-zinc-600 ${
@@ -180,12 +185,13 @@ export default function AdminForm({ onAddAdmin }: { onAddAdmin: (admin: AdminWit
         {/* Submit */}
         <div className="md:col-span-2">
           <Button
-            disabled={loading || Object.keys(validate(form)).length > 0}
+            
             className="flex items-center"
             type="submit"
+            disabled={loading}
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {loading ? "Submitting..." : "Save"}
+            {loading ? "Creating..." : "Create"}
           </Button>
           {success && <p className="mt-2 text-sm text-green-600">{success}</p>}
         </div>

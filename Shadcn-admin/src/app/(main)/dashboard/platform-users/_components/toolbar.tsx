@@ -21,8 +21,8 @@ export function Toolbar<TData>({ table, exportData }: ToolbarProps<TData>) {
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="space-y-1">
-        <CardTitle>Admin Users</CardTitle>
-        <CardDescription>Manage administrators in your system.</CardDescription>
+        <CardTitle>Platform Users</CardTitle>
+        <CardDescription>Manage users registered on your platform.</CardDescription>
       </div>
       <div className="flex flex-1 items-center justify-end gap-2">
         <Input

@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Funnel, ListFilter, Trash2 } from "lucide-react";
+import { Funnel, ListFilter, MoreVertical, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,17 +11,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { PlatformUser } from "@/types/platform-user";
 
-// Inline PlatformUser type
-type PlatformUser = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  status: "Pending" | "Done";
-};
-
-export const platformUserColumns = (handleDelete: (user: PlatformUser) => void): ColumnDef<PlatformUser>[] => [
+export const platformUserColumns = (
+  handleView: (user: PlatformUser) => void,
+  handleDelete: (user: PlatformUser) => void
+): ColumnDef<PlatformUser>[] => [
   {
     accessorKey: "first_name",
     header: ({ column }) => (
@@ -37,6 +32,9 @@ export const platformUserColumns = (handleDelete: (user: PlatformUser) => void):
     cell: ({ row }) => <div>{row.getValue("first_name")}</div>,
     enableSorting: true,
     enableColumnFilter: true,
+    meta: {
+      label: "First Name"
+    }
   },
   {
     accessorKey: "last_name",
@@ -53,6 +51,9 @@ export const platformUserColumns = (handleDelete: (user: PlatformUser) => void):
     cell: ({ row }) => <div>{row.getValue("last_name")}</div>,
     enableSorting: true,
     enableColumnFilter: true,
+    meta: {
+      label: "Last Name"
+    }
   },
   {
     accessorKey: "email",
@@ -69,6 +70,9 @@ export const platformUserColumns = (handleDelete: (user: PlatformUser) => void):
     cell: ({ row }) => <div>{row.getValue("email")}</div>,
     enableSorting: true,
     enableColumnFilter: true,
+    meta: {
+      label: "Email"
+    }
   },
   {
     accessorKey: "status",
@@ -79,7 +83,7 @@ export const platformUserColumns = (handleDelete: (user: PlatformUser) => void):
       </div>
     ),
     cell: ({ row }) => {
-      const status = row.getValue("status") as "Pending" | "Done";
+      const status = row.getValue("status") as string;
       return (
         <span
           className={
@@ -94,6 +98,9 @@ export const platformUserColumns = (handleDelete: (user: PlatformUser) => void):
     },
     enableSorting: true,
     enableColumnFilter: true,
+    meta: {
+      label: "Status"
+    }
   },
   {
     id: "actions",
@@ -104,11 +111,17 @@ export const platformUserColumns = (handleDelete: (user: PlatformUser) => void):
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
-              <Trash2 className="text-destructive h-4 w-4" />
+              <span className="sr-only">Open menu</span>
+              <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleDelete(user)} className="text-red-600">
+            <DropdownMenuItem onClick={() => handleView(user)}>
+              <Eye className="mr-2 h-4 w-4" />
+              View
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleDelete(user)} className="text-destructive">
+              <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
