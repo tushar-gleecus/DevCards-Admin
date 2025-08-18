@@ -1,3 +1,23 @@
+/* Force react-phone-input-2 input dark mode styles */
+.dark .react-phone-input-2 input,
+.dark .react-phone-input-2 .form-control,
+.dark .react-phone-input-2 .flag-dropdown,
+.dark .react-phone-input-2 .selected-flag {
+  background-color: #181c23 !important;
+  color: #f3f4f6 !important;
+  border-color: #334155 !important;
+}
+.dark .react-phone-input-2 .flag-dropdown.open,
+.dark .react-phone-input-2 .flag-dropdown:hover {
+  background-color: #23272f !important;
+}
+/* Fix react-phone-input-2 input in dark mode */
+.dark .react-phone-input input,
+.dark .react-phone-input .form-control {
+  background-color: #181c23 !important;
+  color: #f3f4f6 !important;
+  border-color: #334155 !important;
+}
 @import "tailwindcss";
 @import "tw-animate-css";
 

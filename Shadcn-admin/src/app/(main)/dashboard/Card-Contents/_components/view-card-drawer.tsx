@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Cross2Icon } from "@radix-ui/react-icons";
 import {
   Drawer,
   DrawerClose,
@@ -54,10 +55,19 @@ export function ViewCardDrawer({ cardContent, onClose, categoryMap }: ViewCardDr
   return (
     <Drawer open={!!cardContent} onOpenChange={(open) => !open && onClose()}>
       <DrawerContent className="p-6 flex flex-col h-full max-h-[90vh]">
-        <DrawerHeader className="flex items-center justify-between pb-4">
+        <DrawerHeader className="flex items-center justify-between pb-4 relative">
           <div className="flex flex-row items-center gap-2">
             <DrawerTitle>View Card</DrawerTitle>
           </div>
+          <DrawerClose asChild>
+            <button
+              type="button"
+              aria-label="Close"
+              className="absolute right-4 top-4 p-2 rounded-full hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <Cross2Icon className="h-5 w-5" />
+            </button>
+          </DrawerClose>
         </DrawerHeader>
         {cardContent && (
           <div className="flex flex-col gap-8 p-4 flex-grow overflow-y-auto">

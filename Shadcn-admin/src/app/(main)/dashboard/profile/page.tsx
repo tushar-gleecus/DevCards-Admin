@@ -1,10 +1,13 @@
-//profile
+
+
 "use client";
 
+import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import PhoneInput from "react-phone-input-2";
+//profile
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -37,7 +40,7 @@ function getProfileImageSrc(photo: string | null | undefined) {
   const SUPABASE_BUCKET_BASE =
     "https://plpmyfzzbnwjbwkxiymd.supabase.co/storage/v1/object/public/admin-photos";
 
-  if (!photo) return "/woman-whisper.jpg";
+  if (!photo) return "/avatars/woman-whisper.jpg";
   if (photo.startsWith("http")) return photo;
 
   return `${SUPABASE_BUCKET_BASE}/${photo.replace(/^\/?/, "")}`;
@@ -280,6 +283,12 @@ const handlePasswordChange = async (e: any) => {
                   height={72}
                   className="rounded-full border object-cover"
                   unoptimized={process.env.NODE_ENV === "development"}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    if (target.src !== '/avatars/woman-whisper.jpg') {
+                      target.src = '/avatars/woman-whisper.jpg';
+                    }
+                  }}
                 />
               </div>
               <div className="grid flex-1 grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
@@ -426,8 +435,8 @@ const handlePasswordChange = async (e: any) => {
                           name: "phone",
                           autoComplete: "off",
                         }}
-                        inputClass="w-full bg-white border border-zinc-400 focus:border-zinc-600"
-                        buttonClass="bg-white"
+                        inputClass="w-full border border-zinc-400 focus:border-zinc-600 bg-white dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700"
+                        buttonClass="bg-white dark:bg-zinc-800 border-zinc-400 dark:border-zinc-700"
                         containerClass="rounded"
                       />
                     </div>
@@ -572,6 +581,42 @@ const handlePasswordChange = async (e: any) => {
           </CardContent>
         </Card>
       </div>
+      <style jsx global>{`
+        .dark .react-phone-input-2 input,
+        .dark .react-phone-input-2 .form-control {
+          background-color: #181c23 !important;
+          color: #f3f4f6 !important;
+          border-color: #334155 !important;
+        }
+        .dark .react-phone-input-2 .flag-dropdown,
+        .dark .react-phone-input-2 .selected-flag {
+          background-color: #181c23 !important;
+          color: #f3f4f6 !important;
+          border-color: #334155 !important;
+        }
+        .dark .react-phone-input-2 .flag-dropdown.open,
+        .dark .react-phone-input-2 .flag-dropdown:hover {
+          background-color: #23272f !important;
+        }
+      `}</style>
+      <style jsx global>{`
+        .dark .react-phone-input-2 input,
+        .dark .react-phone-input-2 .form-control {
+          background-color: #181c23 !important;
+          color: #f3f4f6 !important;
+          border-color: #334155 !important;
+        }
+        .dark .react-phone-input-2 .flag-dropdown,
+        .dark .react-phone-input-2 .selected-flag {
+          background-color: #181c23 !important;
+          color: #f3f4f6 !important;
+          border-color: #334155 !important;
+        }
+        .dark .react-phone-input-2 .flag-dropdown.open,
+        .dark .react-phone-input-2 .flag-dropdown:hover {
+          background-color: #23272f !important;
+        }
+      `}</style>
     </div>
   );
 }
