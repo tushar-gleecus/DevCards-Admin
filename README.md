@@ -120,7 +120,7 @@ Pending features: *Synthetic Data, SQL Table Extraction, KPI Cards, Bookmarks, L
 ## 🔗 Links
 
 - GitHub Repo: [DevCards-Admin](https://github.com/tushar-gleecus/DevCards-Admin)  
-- Live Frontend: *(update when deployed)*  
-- Backend API: *(update ngrok/railway link as needed)*  
+- Live Frontend: https://dev-crads-admin.vercel.app/
+- Backend API: https://devub-backend-production.up.railway.app/ 
 
 ---
